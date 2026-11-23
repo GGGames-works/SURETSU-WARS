@@ -4,6 +4,8 @@
 
 ブラウザ上で単体動作するHTML5ゲームとして公開しています。
 
+一度は最後まで読んでね。
+
 [▶ ゲームをプレイ](https://gggames-works.github.io/SURETSU-WARS/suretsu_wars_v1.3.4.html)
 
 ## 1. ゲーム概要・勝利条件
