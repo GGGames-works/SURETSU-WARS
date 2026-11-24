@@ -137,7 +137,7 @@ HTML / CSS / JavaScript のみで構成されており、モダンブラウザ�
 
 * **Windows**: Firefox,Vivaldi
 
-* **Android**: Google Chrome
+* **Android**: Google Chrome,Fennec(Firefox派生)
 
 ※ iOS（Safari / Chrome）、Mac、Linux およびその他のブラウザでも閲覧・プレイ可能ですが、端末の画面サイズやブラウザの仕様によりレイアウトや音声再生の挙動が一部異なる場合があります。
 
