@@ -1,0 +1,4490 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数烈大戦/SURETSU WARS v1.3.7</title>
+<style>
+  :root {
+    --bg-color: #101520;
+    --panel-color: #1c2538;
+    --border-color: #33415c;
+    --text-color: #f0f4f8;
+    --p1-color: #2b8cff;
+    --p1-bg: #153b6e;
+    --p2-color: #ff4757;
+    --p2-bg: #6b1822;
+    --rainbow-grad: linear-gradient(135deg, #ff5e62, #ff9966, #f9d423, #43e97b, #38f9d7, #667eea);
+    --sun-grad: radial-gradient(circle at 50% 50%, #fffbeb 0%, #fde047 38%, #f97316 74%, #c2410c 100%);
+    --cell-size: clamp(26px, min(calc((100dvh - 345px) / 7.4), calc((100vw - 36px) / 7.4)), 48px);
+    --max-width: 520px;
+  }
+  * { box-sizing: border-box; user-select: none; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100dvh;
+    overflow: hidden;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: sans-serif;
+  }
+  body {
+    padding: 4px 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+  }
+  body.landscape-mode {
+    --cell-size: clamp(26px, min(calc((100dvh - 140px) / 7.5), calc((100vw - 375px) / 9.5)), 50px);
+    --max-width: 1120px;
+    padding: 4px 10px;
+  }
+
+  #errBox {
+    display: none; width: 100%; max-width: var(--max-width);
+    background: #7f1d1d; border: 2px solid #f87171; color: #fecaca;
+    padding: 4px 8px; border-radius: 6px; font-size: 11px;
+    margin-bottom: 3px; word-break: break-all;
+  }
+  .top-title {
+    width: 100%; max-width: var(--max-width);
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 2px; padding: 0 1px; gap: 2px;
+    flex-shrink: 0;
+    min-width: 0;
+  }
+  .game-name {
+    font-family: "Courier New", Consolas, monospace;
+    font-size: 10.5px;
+    font-weight: 900;
+    color: #fde047;
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+    padding: 1px 4px;
+    border-radius: 4px;
+    background: linear-gradient(180deg, rgba(56, 189, 248, 0.14) 0%, rgba(28, 37, 56, 0.85) 100%);
+    border: 1px solid rgba(100, 130, 189, 0.55);
+    text-shadow: 0 0 8px rgba(56, 189, 248, 0.45), 1px 2px 0 #090d16;
+    flex-shrink: 0;
+  }
+  body.landscape-mode .game-name {
+    font-size: 14px;
+    padding: 1px 8px;
+    letter-spacing: 0.1em;
+  }
+  .game-name.fx-title-start {
+    animation: titleNeonBounce 0.62s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @keyframes titleNeonBounce {
+    0%   { transform: translateY(0) scale(1); color: #fde047; text-shadow: 0 0 8px rgba(56, 189, 248, 0.45), 1px 2px 0 #090d16; }
+    22%  { transform: translateY(-4px) scale(1.06); color: #fef08a; text-shadow: 0 0 10px #38bdf8, 0 0 18px #facc15; }
+    48%  { transform: translateY(1px) scale(0.98); color: #7dd3fc; text-shadow: 0 0 12px #38bdf8, 0 0 20px #a855f7; }
+    74%  { transform: translateY(-2px) scale(1.03); color: #fde047; text-shadow: 0 0 10px #43e97b; }
+    100% { transform: translateY(0) scale(1); color: #fde047; text-shadow: 0 0 8px rgba(56, 189, 248, 0.45), 1px 2px 0 #090d16; }
+  }
+
+  .top-right { display: flex; align-items: center; gap: 2px; flex-wrap: nowrap; flex-shrink: 0; }
+  .top-right button { padding: 1.5px 3.5px; font-size: 8.5px; letter-spacing: -0.02em; white-space: nowrap; }
+  .top-right button.view-mode-btn { padding: 1.5px 7px; min-width: 74px; letter-spacing: 0; }
+  body.landscape-mode .top-right { gap: 3px; }
+  body.landscape-mode .top-right button { padding: 2px 6px; font-size: 10px; letter-spacing: normal; }
+  body.landscape-mode .top-right button.view-mode-btn { padding: 2px 8px; min-width: 96px; }
+  button.cpu-easy {
+    background: #14532d; border-color: #4ade80; color: #dcfce7;
+    box-shadow: 0 0 8px rgba(74, 222, 128, 0.35);
+  }
+  button.cpu-normal {
+    background: #1e3a8a; border-color: #60a5fa; color: #dbeafe;
+    box-shadow: 0 0 8px rgba(96, 165, 250, 0.45);
+  }
+  button.cpu-hard {
+    background: #7f1d1d; border-color: #f87171; color: #fee2e2;
+    box-shadow: 0 0 10px rgba(248, 113, 113, 0.65);
+  }
+  .ver-tag { font-size: 8.5px; letter-spacing: -0.02em; color: #94a3b8; white-space: nowrap; }
+  body.landscape-mode .ver-tag { font-size: 10px; }
+
+  .main-layout {
+    width: 100%;
+    max-width: var(--max-width);
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    gap: 3px;
+  }
+  body.landscape-mode .main-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 330px;
+    gap: 10px;
+    align-items: stretch;
+  }
+  .board-column {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  body.landscape-mode .board-column {
+    height: 100%;
+    justify-content: space-between;
+  }
+  .side-column {
+    width: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    gap: 3px;
+  }
+  body.landscape-mode .side-column {
+    height: 100%;
+    gap: 6px;
+  }
+
+  .header {
+    width: 100%; max-width: 520px;
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--panel-color); padding: 3px 8px;
+    border-radius: 7px; border: 1px solid var(--border-color);
+    margin-bottom: 3px; font-size: 11px; gap: 6px;
+  }
+  body.landscape-mode .header {
+    max-width: none;
+    padding: 4px 10px;
+    margin-bottom: 4px;
+  }
+  .score-box {
+    display: flex; flex-direction: column; align-items: center;
+    min-width: 68px; padding: 2px 6px; border-radius: 5px;
+    line-height: 1.15;
+  }
+  .score-box span:first-child { font-size: 10px; }
+  body.landscape-mode .score-box { min-width: 72px; padding: 3px 7px; }
+  .score-box.p1 { background: rgba(43, 140, 255, 0.16); border: 1px solid var(--p1-color); }
+  .score-box.p2 { background: rgba(255, 71, 87, 0.16); border: 1px solid var(--p2-color); }
+  .score-val { font-size: 15px; font-weight: bold; }
+  body.landscape-mode .score-val { font-size: 16px; }
+
+  .controls {
+    display: flex; gap: 5px; align-items: center;
+    flex-wrap: nowrap; justify-content: center;
+  }
+  select, button {
+    background: #28344d; color: #fff; border: 1px solid #46587d;
+    border-radius: 5px; padding: 3px 7px; font-size: 11px; cursor: pointer;
+  }
+  button:hover:not(:disabled) { background: #374769; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button.mode-active {
+    background: #1d4ed8; border-color: #60a5fa;
+  }
+  button.moon-active {
+    background: #6b21a8; border-color: #c084fc;
+  }
+
+  .stage-goal-select {
+    padding: 4px 6px;
+    font-size: 11px;
+    font-weight: bold;
+    border-radius: 5px;
+    background: #1e293b;
+    border: 1px solid #64748b;
+  }
+  .stage-new-btn {
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: bold;
+    border-radius: 5px;
+    background: #2b3a59;
+    border: 1px solid #60a5fa;
+    white-space: nowrap;
+  }
+  .stage-new-btn:hover:not(:disabled) {
+    background: #384c75;
+  }
+
+  button.confirm-btn {
+    background: #15803d; border-color: #22c55e; font-weight: bold;
+    padding: 5px 14px;
+    font-size: 12px;
+    min-width: 92px;
+    border-radius: 6px;
+  }
+  button.confirm-btn:hover:not(:disabled) { background: #16a34a; }
+
+  .cancel-btn {
+    padding: 5px 12px;
+    font-size: 12px;
+    min-width: 84px;
+    border-radius: 6px;
+    font-weight: bold;
+  }
+
+  .status-bar {
+    width: 100%; max-width: 520px; background: var(--panel-color);
+    border: 1px solid var(--border-color); border-radius: 6px;
+    padding: 2px 6px; margin-bottom: 3px; font-size: 10px;
+    text-align: center; min-height: 18px; line-height: 1.25; color: #a8c7fa;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  body.landscape-mode .status-bar {
+    max-width: none;
+    min-height: 20px;
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+
+  .board-wrap {
+    position: relative;
+    background: transparent;
+    padding: 0;
+    border: none;
+    box-shadow: none;
+    margin-bottom: 0;
+    max-width: 100%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  body.landscape-mode .board-wrap {
+    flex: 1 1 auto;
+    padding: 0;
+  }
+  .board {
+    display: grid;
+    gap: 2px;
+    position: relative;
+    margin: 0 auto;
+    padding: 5px;
+    border-radius: 9px;
+    background: #111827;
+    border: 2px solid #6482bd;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(148, 163, 184, 0.2);
+  }
+  body.landscape-mode .board {
+    gap: 3px;
+    padding: 6px;
+  }
+
+  .board.fx-game-start {
+    animation: gameStartNeonFrame 0.65s ease-out both;
+  }
+  @keyframes gameStartNeonFrame {
+    0%   { transform: scale(0.97); border-color: #38bdf8; box-shadow: 0 0 22px rgba(56, 189, 248, 0.95), 0 0 38px rgba(168, 85, 247, 0.65), inset 0 0 14px rgba(56, 189, 248, 0.45); }
+    45%  { transform: scale(1.012); border-color: #fde047; box-shadow: 0 0 24px rgba(250, 204, 21, 0.9), 0 0 36px rgba(56, 189, 248, 0.6), inset 0 0 10px rgba(254, 240, 138, 0.3); }
+    100% { transform: scale(1); border-color: #6482bd; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(148, 163, 184, 0.2); }
+  }
+
+  .board.fx-rot-active {
+    border-color: #fbbf24;
+    box-shadow: 0 0 14px rgba(251, 191, 36, 0.65), inset 0 0 10px rgba(251, 191, 36, 0.24);
+  }
+
+  .board.fx-score-pulse {
+    animation: scoreFramePulse 0.38s ease-out both;
+  }
+  @keyframes scoreFramePulse {
+    0%   { border-color: #38bdf8; box-shadow: 0 0 16px rgba(56, 189, 248, 0.85), inset 0 0 10px rgba(56, 189, 248, 0.35); }
+    100% { border-color: #6482bd; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(148, 163, 184, 0.2); }
+  }
+
+  .board.fx-meteor-shake {
+    animation: meteorBoardShake 0.48s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  }
+  @keyframes meteorBoardShake {
+    0%   { transform: translate(0, 0) rotate(0deg); }
+    12%  { transform: translate(-7px, -5px) rotate(-0.9deg); }
+    25%  { transform: translate(7px, 4px) rotate(0.9deg); }
+    38%  { transform: translate(-6px, 5px) rotate(-0.7deg); }
+    52%  { transform: translate(6px, -4px) rotate(0.7deg); }
+    68%  { transform: translate(-4px, 2px) rotate(-0.4deg); }
+    84%  { transform: translate(3px, -2px) rotate(0.3deg); }
+    100% { transform: translate(0, 0) rotate(0deg); }
+  }
+
+  .board.fx-shuffle-board {
+    animation: shuffleBoardSlide 0.52s ease-in-out both;
+  }
+  @keyframes shuffleBoardSlide {
+    0%   { transform: translateX(0) scale(1); filter: brightness(1); }
+    25%  { transform: translateX(-14px) scale(0.97); filter: brightness(1.22); }
+    50%  { transform: translateX(14px) scale(0.97); filter: brightness(1.28); }
+    75%  { transform: translateX(-5px) scale(0.99); filter: brightness(1.1); }
+    100% { transform: translateX(0) scale(1); filter: brightness(1); }
+  }
+
+  .board.fx-star-board {
+    animation: starBoardFlash 0.32s ease-out both;
+  }
+  @keyframes starBoardFlash {
+    0%   { border-color: #fde047; box-shadow: 0 0 18px rgba(250, 204, 21, 0.95), inset 0 0 14px rgba(254, 240, 138, 0.45); }
+    100% { border-color: #6482bd; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(148, 163, 184, 0.2); }
+  }
+
+  .board.fx-hole-board {
+    animation: holeBoardPulse 0.35s ease-in-out both;
+  }
+  @keyframes holeBoardPulse {
+    0%   { transform: scale(1); border-color: #c084fc; box-shadow: 0 0 16px rgba(168, 85, 247, 0.85), inset 0 0 16px rgba(59, 7, 100, 0.75); }
+    45%  { transform: scale(0.985); }
+    100% { transform: scale(1); border-color: #6482bd; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(148, 163, 184, 0.2); }
+  }
+
+  .board.fx-trap-board {
+    animation: trapBoardShake 0.48s linear both;
+  }
+  @keyframes trapBoardShake {
+    0%   { transform: translateX(0); border-color: #f43f5e; box-shadow: 0 0 20px rgba(244, 63, 94, 0.9), inset 0 0 16px rgba(225, 29, 72, 0.5); }
+    20%  { transform: translateX(-6px); }
+    40%  { transform: translateX(6px); }
+    60%  { transform: translateX(-5px); }
+    80%  { transform: translateX(4px); }
+    100% { transform: translateX(0); border-color: #6482bd; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(148, 163, 184, 0.2); }
+  }
+
+  .board.fx-destroy-board {
+    animation: destroyBoardHit 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @keyframes destroyBoardHit {
+    0%   { transform: translate(0, 0) scale(1.01); border-color: #fb923c; box-shadow: 0 0 20px rgba(249, 115, 22, 0.95); }
+    22%  { transform: translate(-6px, 4px) scale(0.99); }
+    45%  { transform: translate(6px, -4px) scale(1); }
+    70%  { transform: translate(-3px, -2px) scale(1); }
+    100% { transform: translate(0, 0) scale(1); border-color: #6482bd; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(148, 163, 184, 0.2); }
+  }
+
+  .board.fx-epic-board {
+    animation: epicBoardAura 0.65s ease-out both;
+  }
+  @keyframes epicBoardAura {
+    0%   { transform: scale(1.015); border-color: #fef08a; box-shadow: 0 0 26px rgba(250, 204, 21, 1), 0 0 42px rgba(56, 189, 248, 0.75), inset 0 0 18px rgba(254, 240, 138, 0.55); }
+    50%  { transform: scale(1.005); border-color: #38bdf8; box-shadow: 0 0 20px rgba(250, 204, 21, 0.8), inset 0 0 10px rgba(250, 204, 21, 0.25); }
+    100% { transform: scale(1); border-color: #6482bd; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(148, 163, 184, 0.2); }
+  }
+
+  .board.fx-hundred-frame {
+    animation: hundredArcadeSlam 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @keyframes hundredArcadeSlam {
+    0%   { transform: scale(0.955); border-color: #ff4757; box-shadow: 0 0 16px #ff4757, inset 0 0 10px rgba(255, 71, 87, 0.55); }
+    16%  { transform: translate(-8px, -6px) scale(1.03) rotate(-0.8deg); border-color: #facc15; box-shadow: 0 0 26px #facc15, inset 0 0 14px rgba(250, 204, 21, 0.6); }
+    32%  { transform: translate(8px, 5px) scale(1.02) rotate(0.8deg); border-color: #43e97b; box-shadow: 0 0 26px #43e97b, inset 0 0 14px rgba(67, 233, 123, 0.6); }
+    48%  { transform: translate(-6px, 4px) scale(1.015) rotate(-0.5deg); border-color: #38bdf8; box-shadow: 0 0 26px #38bdf8, inset 0 0 14px rgba(56, 189, 248, 0.6); }
+    64%  { transform: translate(6px, -3px) scale(1.01) rotate(0.5deg); border-color: #c084fc; box-shadow: 0 0 26px #c084fc, inset 0 0 14px rgba(192, 132, 252, 0.6); }
+    80%  { transform: translate(-3px, 2px) scale(1.005); border-color: #ff9966; box-shadow: 0 0 20px #ff9966, inset 0 0 10px rgba(255, 153, 102, 0.5); }
+    100% { transform: translate(0, 0) scale(1) rotate(0deg); border-color: #6482bd; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(148, 163, 184, 0.2); }
+  }
+
+  .fx-rainbow-trail {
+    position: absolute;
+    width: 145px;
+    height: 10px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(255, 71, 87, 0), rgba(255, 153, 102, 0.75), rgba(250, 204, 21, 0.9), rgba(67, 233, 123, 0.9), rgba(56, 189, 248, 0.9), rgba(192, 132, 252, 0.85), rgba(255, 255, 255, 0.95));
+    box-shadow: 0 0 14px rgba(250, 204, 21, 0.85), 0 0 22px rgba(56, 189, 248, 0.65);
+    transform-origin: right center;
+    pointer-events: none;
+    z-index: 13;
+    animation: rainbowTrailSweep 0.68s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes rainbowTrailSweep {
+    0%   { opacity: 0; transform: translate(-95px, -65px) rotate(32deg) scaleX(0.35); }
+    20%  { opacity: 1; }
+    100% { opacity: 0; transform: translate(115px, 78px) rotate(32deg) scaleX(1.25); }
+  }
+
+  .fx-star-comet {
+    position: absolute;
+    font-size: 20px;
+    line-height: 1;
+    color: #fef08a;
+    text-shadow: 0 0 10px #fde047, 0 0 20px #f97316, 0 0 28px #38bdf8;
+    pointer-events: none;
+    z-index: 14;
+    animation: starCometFly 0.68s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes starCometFly {
+    0%   { opacity: 0; transform: translate(-95px, -65px) rotate(-25deg) scale(0.7); }
+    18%  { opacity: 1; }
+    100% { opacity: 0; transform: translate(115px, 78px) rotate(135deg) scale(1.35); }
+  }
+
+  .fx-piece-spin .tile {
+    animation: pieceSpin90 0.36s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @keyframes pieceSpin90 {
+    0%   { transform: rotate(-90deg) scale(1.14); box-shadow: 0 0 12px rgba(250, 204, 21, 0.95); }
+    100% { transform: rotate(0deg) scale(1); }
+  }
+
+  .cell {
+    width: var(--cell-size); height: var(--cell-size);
+    background: #22304a; border-radius: 5px; position: relative;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid #3c5178;
+    overflow: hidden;
+  }
+  .cell.wall {
+    background: #080b12;
+    border-color: #1c2538;
+  }
+
+  .cell.minus-cell {
+    background: radial-gradient(circle at 50% 50%, #020306 0%, #090612 34%, #3b0764 56%, #701a75 68%, #140824 85%, #05070d 100%);
+    border-color: #a855f7;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.96), 0 0 5px rgba(147, 51, 234, 0.35);
+  }
+  .cell.minus-cell .bh-disk {
+    position: absolute;
+    width: 82%;
+    height: 36%;
+    border-radius: 50%;
+    transform: rotate(-22deg);
+    background: linear-gradient(90deg, rgba(192, 132, 252, 0.15) 0%, rgba(244, 114, 182, 0.72) 28%, rgba(255, 255, 255, 0.92) 50%, rgba(168, 85, 247, 0.72) 72%, rgba(88, 28, 135, 0.15) 100%);
+    box-shadow: 0 0 6px rgba(217, 70, 239, 0.65);
+    pointer-events: none;
+    z-index: 1;
+  }
+  .cell.minus-cell .bh-core {
+    position: absolute;
+    width: 44%;
+    height: 44%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 45% 45%, #000000 0%, #030306 72%, rgba(216, 180, 254, 0.85) 100%);
+    box-shadow: 0 0 7px rgba(0, 0, 0, 1), 0 0 4px rgba(232, 121, 249, 0.7);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .cell.lucky {
+    background: radial-gradient(circle at 50% 50%, rgba(250, 204, 21, 0.20), rgba(34, 48, 74, 0.96) 72%);
+    border-color: rgba(250, 204, 21, 0.5);
+  }
+  .cell.lucky::after {
+    content: "\2605";
+    position: absolute;
+    font-size: 14px;
+    line-height: 1;
+    color: rgba(253, 224, 71, 0.72);
+    text-shadow: 0 0 6px rgba(250, 204, 21, 0.45);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .cell.roulette-cell {
+    background: radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.24), rgba(28, 37, 56, 0.96) 74%);
+    border-color: rgba(192, 132, 252, 0.65);
+  }
+  .cell.roulette-cell::after {
+    content: "\263E";
+    position: absolute;
+    font-size: 14px;
+    line-height: 1;
+    color: rgba(233, 213, 255, 0.76);
+    text-shadow: 0 0 6px rgba(168, 85, 247, 0.55);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .cell.trap-p1 .trap-badge {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 7px;
+    height: 7px;
+    transform: rotate(45deg);
+    border-radius: 1px;
+    background: #38bdf8;
+    box-shadow: 0 0 4px rgba(56, 189, 248, 0.9);
+    pointer-events: none;
+    z-index: 3;
+  }
+
+  .fx-star-ring {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid #fde047;
+    box-shadow: 0 0 10px rgba(250, 204, 21, 0.9), inset 0 0 6px rgba(254, 240, 138, 0.75);
+    transform: translate(-50%, -50%) scale(0.35);
+    pointer-events: none;
+    z-index: 9;
+    animation: starRippleExpand 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes starRippleExpand {
+    0%   { opacity: 1; transform: translate(-50%, -50%) scale(0.35); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(2.85); }
+  }
+
+  .fx-destroy-blast-ring {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 3px solid #fb923c;
+    background: radial-gradient(circle, rgba(254, 240, 138, 0.85) 0%, rgba(249, 115, 22, 0.55) 55%, rgba(239, 68, 68, 0) 100%);
+    box-shadow: 0 0 14px rgba(249, 115, 22, 0.95);
+    transform: translate(-50%, -50%) scale(0.3);
+    pointer-events: none;
+    z-index: 10;
+    animation: destroyBlastExpand 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes destroyBlastExpand {
+    0%   { opacity: 1; transform: translate(-50%, -50%) scale(0.3); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(3.1); }
+  }
+
+  .fx-hole-pull {
+    animation: holeSuctionPulse 0.36s ease-in both;
+  }
+  @keyframes holeSuctionPulse {
+    0%   { transform: scale(1); filter: hue-rotate(0deg) brightness(1); }
+    45%  { transform: scale(0.74); filter: hue-rotate(-25deg) brightness(1.35); }
+    100% { transform: scale(1); filter: hue-rotate(0deg) brightness(1); }
+  }
+
+  .fx-moon-spin {
+    animation: moonRouletteBlink 0.42s steps(2, end) 2;
+  }
+  @keyframes moonRouletteBlink {
+    0%   { box-shadow: 0 0 12px #e879f9, inset 0 0 8px #f5d0fe; filter: brightness(1.45); }
+    50%  { box-shadow: 0 0 12px #38bdf8, inset 0 0 8px #bae6fd; filter: brightness(0.85); }
+    100% { box-shadow: 0 0 12px #fde047, inset 0 0 8px #fef08a; filter: brightness(1.35); }
+  }
+
+  .fx-meteor-blast {
+    animation: meteorCellShock 0.46s ease-out both;
+  }
+  @keyframes meteorCellShock {
+    0%   { background-color: rgba(251, 146, 60, 0.85); box-shadow: 0 0 14px rgba(249, 115, 22, 0.95); }
+    55%  { background-color: rgba(239, 68, 68, 0.45); box-shadow: 0 0 8px rgba(239, 68, 68, 0.6); }
+    100% { box-shadow: none; }
+  }
+  .fx-meteor-streak {
+    position: absolute;
+    width: 84px;
+    height: 3px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(253, 224, 71, 0.95), rgba(249, 115, 22, 0.95), rgba(239, 68, 68, 0));
+    box-shadow: 0 0 10px rgba(251, 146, 60, 0.95);
+    transform: rotate(36deg);
+    pointer-events: none;
+    z-index: 11;
+    animation: meteorStreakFly 0.34s ease-in forwards;
+  }
+  @keyframes meteorStreakFly {
+    0%   { opacity: 0; transform: translate(-55px, -42px) rotate(36deg) scale(0.7); }
+    25%  { opacity: 1; }
+    100% { opacity: 0; transform: translate(48px, 36px) rotate(36deg) scale(1.15); }
+  }
+
+  .fx-trap-lock {
+    animation: trapRadarLock 0.5s ease-out both;
+  }
+  @keyframes trapRadarLock {
+    0%   { box-shadow: 0 0 0 2px #f43f5e, inset 0 0 10px rgba(244, 63, 94, 0.75); }
+    50%  { box-shadow: 0 0 10px 2px #fb7185, inset 0 0 4px rgba(244, 63, 94, 0.25); }
+    100% { box-shadow: none; }
+  }
+
+  .fx-trap-detonate {
+    animation: trapVibFlash 0.44s linear both;
+  }
+  @keyframes trapVibFlash {
+    0%   { transform: translateX(0); background-color: rgba(239, 68, 68, 0.85); box-shadow: 0 0 12px rgba(239, 68, 68, 0.95); }
+    15%  { transform: translateX(-4px); }
+    30%  { transform: translateX(4px); background-color: rgba(153, 27, 27, 0.7); }
+    45%  { transform: translateX(-4px); }
+    60%  { transform: translateX(4px); background-color: rgba(239, 68, 68, 0.75); }
+    75%  { transform: translateX(-3px); }
+    90%  { transform: translateX(3px); }
+    100% { transform: translateX(0); box-shadow: none; }
+  }
+
+  .fx-epic-cell {
+    animation: epicCellBurst 0.65s ease-out both;
+    z-index: 5;
+  }
+  @keyframes epicCellBurst {
+    0%   { transform: scale(1.15); box-shadow: 0 0 16px rgba(254, 240, 138, 1), 0 0 24px rgba(56, 189, 248, 0.85); filter: brightness(1.45); }
+    100% { transform: scale(1); box-shadow: 0 0 7px rgba(250, 204, 21, 0.65); filter: brightness(1); }
+  }
+
+  .cell.valid-drop {
+    border: 1px dashed rgba(74, 222, 128, 0.78);
+    cursor: pointer;
+  }
+  .cell.valid-drop:hover { border-color: #4ade80; }
+  .cell.penalty-drop {
+    border: 1px dashed rgba(245, 158, 11, 0.85);
+    cursor: pointer;
+  }
+  .cell.targetable {
+    border: 1px solid rgba(250, 204, 21, 0.9);
+    cursor: pointer;
+  }
+  .cell.last-placed {
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.85);
+  }
+  .cell.score-glow {
+    box-shadow: 0 0 7px rgba(250, 204, 21, 0.65);
+    z-index: 3;
+  }
+  .cell.draft-cell {
+    border: 2px solid #38bdf8;
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.65);
+    cursor: pointer;
+    z-index: 3;
+  }
+
+  .score-popup {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid #facc15;
+    color: #fde047;
+    font-weight: 800;
+    font-size: 12px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    pointer-events: none;
+    z-index: 15;
+    white-space: nowrap;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.65);
+    animation: popFloat 1.25s ease-out forwards;
+  }
+  .score-popup.epic {
+    background: linear-gradient(135deg, #422006, #1e1b4b);
+    border: 2px solid #fef08a;
+    color: #fef08a;
+    font-size: 13px;
+    padding: 3px 9px;
+    box-shadow: 0 0 14px rgba(250, 204, 21, 0.9);
+  }
+  @keyframes popFloat {
+    0%   { opacity: 0; transform: translate(-50%, -25%) scale(0.85); }
+    18%  { opacity: 1; transform: translate(-50%, -55%) scale(1.05); }
+    80%  { opacity: 1; transform: translate(-50%, -95%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -115%) scale(0.95); }
+  }
+
+  .tile {
+    width: calc(var(--cell-size) - 6px);
+    height: calc(var(--cell-size) - 6px);
+    border-radius: 5px; position: relative;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 800; color: #fff;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.85);
+    z-index: 2;
+  }
+  .tile.owner-1 { background: var(--p1-bg); border: 2px solid var(--p1-color); }
+  .tile.owner-2 { background: var(--p2-bg); border: 2px solid var(--p2-color); }
+  .tile.owner-0 { background: var(--rainbow-grad); border: 2px solid #fff; }
+  .tile.wild-card {
+    background: var(--sun-grad);
+    border: 2px solid #fef08a;
+    box-shadow: 0 0 8px rgba(251, 191, 36, 0.85);
+    font-size: 16px;
+    color: #fffbeb;
+    text-shadow: 0 1px 3px rgba(124, 45, 18, 0.9), 0 0 8px rgba(254, 240, 138, 0.9);
+  }
+  .leg {
+    position: absolute;
+    background: #fff;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.95), 0 0 1px #000;
+  }
+  .leg.top    { top: -4px; left: 50%; transform: translateX(-50%); width: 6px; height: 5px; }
+  .leg.bottom { bottom: -4px; left: 50%; transform: translateX(-50%); width: 6px; height: 5px; }
+  .leg.left   { left: -4px; top: 50%; transform: translateY(-50%); width: 5px; height: 6px; }
+  .leg.right  { right: -4px; top: 50%; transform: translateY(-50%); width: 5px; height: 6px; }
+
+  .hand-area {
+    width: 100%; max-width: 520px; background: var(--panel-color);
+    border: 1px solid var(--border-color); border-radius: 7px;
+    padding: 4px 6px; margin-bottom: 0;
+    flex-shrink: 0;
+  }
+  body.landscape-mode .hand-area {
+    max-width: none;
+    padding: 6px 8px;
+  }
+  .area-title {
+    font-size: 10px; color: #94a3b8; margin-bottom: 2px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .hand-list { display: flex; justify-content: center; gap: 6px; }
+  .action-row {
+    display: flex; justify-content: center; gap: 14px;
+    margin-top: 5px;
+  }
+  body.landscape-mode .action-row {
+    margin-top: 8px;
+    gap: 16px;
+  }
+  .hand-slot {
+    padding: 2px; border-radius: 7px; border: 2px solid transparent;
+    cursor: pointer; background: #141b29;
+  }
+  .hand-slot.selected { border-color: #38bdf8; transform: translateY(-1px); background: #1e293b; }
+  .item-list { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+  .item-btn {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 3px 2px; font-size: 10px; background: #232e45; border: 1px solid #3f5278;
+    line-height: 1.15;
+  }
+  .item-btn.active { border-color: #facc15; background: #423815; }
+  .item-cost { font-size: 9px; color: #fbbf24; margin-top: 1px; }
+  .item-btn:disabled .item-cost { color: #94a3b8; }
+  .log-box {
+    width: 100%; max-width: 520px;
+    flex: 1 1 36px;
+    min-height: 32px;
+    max-height: 54px;
+    background: #121826;
+    border: 1px solid var(--border-color); border-radius: 6px;
+    padding: 3px 6px; font-size: 10px; line-height: 1.25;
+    overflow-y: auto; color: #cbd5e1;
+  }
+  body.landscape-mode .log-box {
+    max-width: none;
+    flex: 1 1 auto;
+    max-height: none;
+    min-height: 44px;
+  }
+
+  .gameover-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(6, 9, 18, 0.72);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 60;
+    padding: 14px;
+    animation: goFadeIn 0.22s ease-out both;
+  }
+  .gameover-overlay.show {
+    display: flex;
+  }
+  @keyframes goFadeIn {
+    0%   { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  .gameover-card {
+    position: relative;
+    width: 100%;
+    max-width: 340px;
+    background: linear-gradient(160deg, #1b243b 0%, #0d1322 100%);
+    border: 2px solid #facc15;
+    border-radius: 12px;
+    padding: 16px 18px 14px;
+    text-align: center;
+    box-shadow: 0 0 28px rgba(250, 204, 21, 0.35), 0 12px 32px rgba(0, 0, 0, 0.8);
+    animation: goSlamIn 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .gameover-card.lose {
+    border-color: #f87171;
+    box-shadow: 0 0 24px rgba(248, 113, 113, 0.35), 0 12px 32px rgba(0, 0, 0, 0.8);
+  }
+  .gameover-card.draw {
+    border-color: #38bdf8;
+    box-shadow: 0 0 24px rgba(56, 189, 248, 0.42), 0 12px 32px rgba(0, 0, 0, 0.8);
+  }
+  .gameover-card.draw.fx-card-blink {
+    animation: goSlamIn 0.38s cubic-bezier(0.22, 1, 0.36, 1) both, drawPrismBlink 1.3s ease-in-out 0.38s infinite;
+  }
+  @keyframes drawPrismBlink {
+    0%   { border-color: #38bdf8; box-shadow: 0 0 22px rgba(56, 189, 248, 0.85), inset 0 0 10px rgba(56, 189, 248, 0.22); }
+    50%  { border-color: #cbd5e1; box-shadow: 0 0 26px rgba(226, 232, 240, 0.88), inset 0 0 12px rgba(148, 163, 184, 0.25); }
+    100% { border-color: #38bdf8; box-shadow: 0 0 22px rgba(56, 189, 248, 0.85), inset 0 0 10px rgba(56, 189, 248, 0.22); }
+  }
+
+  .gameover-card.win.fx-card-blink {
+    animation: goSlamIn 0.38s cubic-bezier(0.22, 1, 0.36, 1) both, winRainbowBlink 1.1s linear 0.38s infinite;
+  }
+  @keyframes winRainbowBlink {
+    0%   { border-color: #ff5e62; box-shadow: 0 0 24px rgba(255, 94, 98, 0.85), 0 0 38px rgba(250, 204, 21, 0.45); }
+    20%  { border-color: #facc15; box-shadow: 0 0 26px rgba(250, 204, 21, 0.9), 0 0 40px rgba(67, 233, 123, 0.45); }
+    40%  { border-color: #43e97b; box-shadow: 0 0 26px rgba(67, 233, 123, 0.9), 0 0 40px rgba(56, 189, 248, 0.45); }
+    60%  { border-color: #38bdf8; box-shadow: 0 0 26px rgba(56, 189, 248, 0.9), 0 0 40px rgba(192, 132, 252, 0.45); }
+    80%  { border-color: #c084fc; box-shadow: 0 0 26px rgba(192, 132, 252, 0.9), 0 0 40px rgba(255, 94, 98, 0.45); }
+    100% { border-color: #ff5e62; box-shadow: 0 0 24px rgba(255, 94, 98, 0.85), 0 0 38px rgba(250, 204, 21, 0.45); }
+  }
+  .gameover-card.lose.fx-card-blink {
+    animation: goSlamIn 0.38s cubic-bezier(0.22, 1, 0.36, 1) both, loseArcadeBlink 0.72s steps(1, end) 0.38s infinite;
+  }
+  @keyframes loseArcadeBlink {
+    0%   { border-color: #ff4757; box-shadow: 0 0 24px rgba(255, 71, 87, 0.92), inset 0 0 10px rgba(255, 71, 87, 0.3); }
+    33%  { border-color: #2b8cff; box-shadow: 0 0 24px rgba(43, 140, 255, 0.92), inset 0 0 10px rgba(43, 140, 255, 0.3); }
+    66%  { border-color: #ffffff; box-shadow: 0 0 26px rgba(255, 255, 255, 0.92), inset 0 0 10px rgba(255, 255, 255, 0.25); }
+    100% { border-color: #ff4757; box-shadow: 0 0 24px rgba(255, 71, 87, 0.92), inset 0 0 10px rgba(255, 71, 87, 0.3); }
+  }
+  @keyframes goSlamIn {
+    0%   { transform: scale(0.62) translateY(18px); opacity: 0; }
+    65%  { transform: scale(1.05) translateY(-2px); opacity: 1; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
+  }
+  .gameover-ribbon {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(250, 204, 21, 0.16);
+    border: 1px solid rgba(250, 204, 21, 0.65);
+    color: #fde047;
+    margin-bottom: 6px;
+  }
+  .gameover-card.lose .gameover-ribbon {
+    background: rgba(248, 113, 113, 0.16);
+    border-color: rgba(248, 113, 113, 0.65);
+    color: #fca5a5;
+  }
+  .gameover-card.draw .gameover-ribbon {
+    background: rgba(56, 189, 248, 0.16);
+    border-color: rgba(56, 189, 248, 0.65);
+    color: #bae6fd;
+  }
+
+  .gameover-banner {
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    line-height: 1.15;
+    margin: 2px 0 6px;
+    color: #fef08a;
+    text-shadow: 0 0 12px rgba(250, 204, 21, 0.75), 0 3px 0 #713f12;
+  }
+  .gameover-card.lose .gameover-banner {
+    color: #ff6b81;
+    text-shadow: 0 0 12px rgba(255, 71, 87, 0.75), 0 3px 0 #4c0519;
+  }
+  .gameover-card.draw .gameover-banner {
+    color: #7dd3fc;
+    text-shadow: 0 0 12px rgba(56, 189, 248, 0.72), 0 3px 0 #0c4a6e;
+  }
+
+  .gameover-sub {
+    font-size: 11px;
+    color: #cbd5e1;
+    margin-bottom: 10px;
+  }
+  .gameover-scores {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .gameover-score-pill {
+    flex: 1;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid #33415c;
+    border-radius: 7px;
+    padding: 6px 8px;
+  }
+  .gameover-score-pill.p1 { border-color: rgba(43, 140, 255, 0.75); }
+  .gameover-score-pill.p2 { border-color: rgba(255, 71, 87, 0.75); }
+  .gameover-score-lbl { display: block; font-size: 10px; color: #94a3b8; }
+  .gameover-score-num { display: block; font-size: 18px; font-weight: 900; color: #f8fafc; margin-top: 1px; }
+  .gameover-actions {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+  }
+  .gameover-btn {
+    background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+    border: 1px solid #93c5fd;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.55);
+  }
+  .gameover-btn:hover { background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%); }
+  .gameover-btn.secondary {
+    background: #1e293b;
+    border-color: #64748b;
+    box-shadow: none;
+  }
+  .gameover-btn.secondary:hover { background: #334155; }
+  .stage-new-btn.rematch-pulse {
+    animation: rematchBtnPulse 1.1s ease-in-out infinite;
+    border-color: #fde047;
+    box-shadow: 0 0 12px rgba(250, 204, 21, 0.8);
+  }
+  @keyframes rematchBtnPulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.06); }
+  }
+  .board.fx-gameover-flash {
+    animation: gameOverBoardFlash 0.65s ease-out both;
+  }
+  @keyframes gameOverBoardFlash {
+    0%   { border-color: #fef08a; box-shadow: 0 0 28px rgba(250, 204, 21, 0.95); }
+    50%  { border-color: #38bdf8; box-shadow: 0 0 20px rgba(56, 189, 248, 0.75); }
+    100% { border-color: #6482bd; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5); }
+  }
+</style>
+</head>
+<body>
+
+<div id="errBox"></div>
+
+<div class="top-title">
+  <span class="game-name" id="gameTitleEl">SURETSU WARS</span>
+  <div class="top-right">
+    <button type="button" id="btnCpuDiff" class="cpu-normal">NORMAL</button>
+    <button type="button" id="btnMoonAll">Full Moon: OFF</button>
+    <button type="button" id="btnViewMode" class="view-mode-btn">Portrait (7x7)</button>
+    <button type="button" id="btnBgm">BGM: OFF</button>
+    <span class="ver-tag">v1.3.7</span>
+  </div>
+</div>
+
+<div class="main-layout">
+  <div class="board-column">
+    <div class="header">
+      <div class="score-box p1">
+        <span>PLAYER (Blue)</span>
+        <span class="score-val" id="score1">0</span>
+      </div>
+      <div class="controls">
+        <select id="goalSelect" class="stage-goal-select">
+          <option value="100">Goal: 100</option>
+          <option value="150" selected>Goal: 150</option>
+          <option value="300">Goal: 300</option>
+          <option value="500">Goal: 500</option>
+        </select>
+        <button type="button" id="btnNew" class="stage-new-btn">NEW STAGE</button>
+      </div>
+      <div class="score-box p2">
+        <span>CPU (Red)</span>
+        <span class="score-val" id="score2">0</span>
+      </div>
+    </div>
+
+    <div class="status-bar" id="statusBar">Loading...</div>
+    <div class="board-wrap">
+      <div class="board" id="board"></div>
+    </div>
+  </div>
+
+  <div class="side-column">
+    <div class="hand-area">
+      <div class="area-title">
+        <span>YOUR HAND</span>
+        <span id="turnInfo">Stage Ready</span>
+      </div>
+      <div class="hand-list" id="handList"></div>
+      <div class="action-row">
+        <button type="button" id="btnUndo" class="cancel-btn" disabled>CANCEL</button>
+        <button type="button" id="btnConfirm" class="confirm-btn" disabled>CONFIRM</button>
+      </div>
+    </div>
+
+    <div class="hand-area">
+      <div class="area-title">
+        <span>ITEMS (1 / Match Each)</span>
+      </div>
+      <div class="item-list">
+        <button type="button" class="item-btn" id="item-rot"><span>Rotate Piece</span><span class="item-cost" id="cost-rot">20 pt</span></button>
+        <button type="button" class="item-btn" id="item-shf"><span>Shuffle Hand</span><span class="item-cost" id="cost-shf">10 pt</span></button>
+        <button type="button" class="item-btn" id="item-trap"><span>Set Trap</span><span class="item-cost" id="cost-trap">20 pt</span></button>
+        <button type="button" class="item-btn" id="item-bomb"><span>Destroy</span><span class="item-cost" id="cost-bomb">40 pt</span></button>
+      </div>
+    </div>
+
+    <div class="log-box" id="logBox"></div>
+  </div>
+</div>
+
+<div class="gameover-overlay" id="gameOverOverlay" aria-hidden="true">
+  <div class="gameover-card" id="gameOverCard">
+    <div class="gameover-ribbon" id="goRibbon">FINISH</div>
+    <div class="gameover-banner" id="goBanner">GAME OVER</div>
+    <div class="gameover-sub" id="goSub">Goal reached</div>
+    <div class="gameover-scores">
+      <div class="gameover-score-pill p1">
+        <span class="gameover-score-lbl">PLAYER</span>
+        <span class="gameover-score-num" id="goScore1">0</span>
+      </div>
+      <div class="gameover-score-pill p2">
+        <span class="gameover-score-lbl">CPU</span>
+        <span class="gameover-score-num" id="goScore2">0</span>
+      </div>
+    </div>
+    <div class="gameover-actions">
+      <button type="button" class="gameover-btn" id="goPlayAgainBtn">PLAY AGAIN</button>
+      <button type="button" class="gameover-btn secondary" id="goCloseBtn">VIEW BOARD</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function showError(text) {
+  var eb = document.getElementById("errBox");
+  if (eb) {
+    eb.style.display = "block";
+    eb.textContent = "ERROR: " + text;
+  }
+}
+window.onerror = function(msg, url, line) {
+  showError(msg + " (Line " + line + ")");
+};
+
+(function() {
+  var ITEM_COSTS = { rot: 20, shf: 10, trap: 20, bomb: 40 };
+
+  var audioCtx = null;
+  var noiseBuffer = null;
+  var bgmEnabled = false;
+  var bgmTimer = null;
+  var bgmStep = 0;
+
+  function ensureAudio() {
+    if (!audioCtx) {
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if (Ctx) audioCtx = new Ctx();
+    }
+    if (audioCtx && audioCtx.state === "suspended") {
+      audioCtx.resume();
+    }
+    if (audioCtx && !noiseBuffer) {
+      var len = Math.floor(audioCtx.sampleRate * 1.2);
+      noiseBuffer = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+      var ch = noiseBuffer.getChannelData(0);
+      for (var i = 0; i < len; i++) {
+        ch[i] = Math.random() * 2 - 1;
+      }
+    }
+    return audioCtx;
+  }
+
+  function playSynthTone(freqStart, freqEnd, duration, waveType, gainVal, delaySec, filterFreq, filterType) {
+    var ctx = ensureAudio();
+    if (!ctx || !freqStart || freqStart <= 0) return;
+    var startAt = ctx.currentTime + (delaySec || 0);
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+
+    osc.type = waveType || "square";
+    osc.frequency.setValueAtTime(freqStart, startAt);
+    if (freqEnd && freqEnd > 0 && freqEnd !== freqStart) {
+      osc.frequency.exponentialRampToValueAtTime(freqEnd, startAt + duration);
+    }
+
+    gain.gain.setValueAtTime(0.0001, startAt);
+    gain.gain.linearRampToValueAtTime(gainVal, startAt + 0.006);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+
+    if (filterFreq) {
+      var filter = ctx.createBiquadFilter();
+      filter.type = filterType || "lowpass";
+      filter.frequency.setValueAtTime(filterFreq, startAt);
+      filter.Q.setValueAtTime(2.2, startAt);
+      osc.connect(filter);
+      filter.connect(gain);
+    } else {
+      osc.connect(gain);
+    }
+
+    gain.connect(ctx.destination);
+    osc.start(startAt);
+    osc.stop(startAt + duration + 0.015);
+  }
+
+  function playAirVent(fStart, fEnd, duration, gainVal, delaySec, qVal) {
+    var ctx = ensureAudio();
+    if (!ctx || !noiseBuffer) return;
+    var startAt = ctx.currentTime + (delaySec || 0);
+    var src = ctx.createBufferSource();
+    src.buffer = noiseBuffer;
+
+    var filter = ctx.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.Q.setValueAtTime(qVal || 3.2, startAt);
+    filter.frequency.setValueAtTime(fStart, startAt);
+    if (fEnd && fEnd > 0 && fEnd !== fStart) {
+      filter.frequency.exponentialRampToValueAtTime(fEnd, startAt + duration);
+    }
+
+    var gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, startAt);
+    gain.gain.linearRampToValueAtTime(gainVal, startAt + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+
+    src.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+
+    src.start(startAt);
+    src.stop(startAt + duration + 0.015);
+  }
+
+  var comicPuzzleSteps = [
+    { lead: 523.25, bass: 130.81, blip: 0       },
+    { lead: 659.25, bass: 196.00, blip: 0       },
+    { lead: 783.99, bass: 130.81, blip: 0       },
+    { lead: 659.25, bass: 261.63, blip: 1567.98 },
+    { lead: 587.33, bass: 146.83, blip: 0       },
+    { lead: 698.46, bass: 220.00, blip: 0       },
+    { lead: 880.00, bass: 146.83, blip: 0       },
+    { lead: 783.99, bass: 196.00, blip: 0       },
+
+    { lead: 523.25, bass: 130.81, blip: 0       },
+    { lead: 659.25, bass: 196.00, blip: 0       },
+    { lead: 783.99, bass: 130.81, blip: 0       },
+    { lead: 1046.5, bass: 261.63, blip: 0       },
+    { lead: 880.00, bass: 174.61, blip: 0       },
+    { lead: 783.99, bass: 196.00, blip: 0       },
+    { lead: 659.25, bass: 130.81, blip: 0       },
+    { lead: 587.33, bass: 196.00, blip: 1567.98 },
+
+    { lead: 698.46, bass: 174.61, blip: 0       },
+    { lead: 880.00, bass: 261.63, blip: 0       },
+    { lead: 987.77, bass: 174.61, blip: 0       },
+    { lead: 880.00, bass: 220.00, blip: 0       },
+    { lead: 783.99, bass: 196.00, blip: 0       },
+    { lead: 659.25, bass: 293.66, blip: 0       },
+    { lead: 587.33, bass: 146.83, blip: 0       },
+    { lead: 783.99, bass: 196.00, blip: 0       },
+
+    { lead: 659.25, bass: 164.81, blip: 0       },
+    { lead: 783.99, bass: 246.94, blip: 0       },
+    { lead: 880.00, bass: 220.00, blip: 0       },
+    { lead: 783.99, bass: 196.00, blip: 0       },
+    { lead: 698.46, bass: 174.61, blip: 0       },
+    { lead: 659.25, bass: 130.81, blip: 0       },
+    { lead: 587.33, bass: 196.00, blip: 0       },
+    { lead: 523.25, bass: 130.81, blip: 1567.98 }
+  ];
+
+  function startBgm() {
+    var ctx = ensureAudio();
+    if (!ctx) return;
+    bgmEnabled = true;
+    document.getElementById("btnBgm").textContent = "BGM: ON";
+    if (bgmTimer) clearInterval(bgmTimer);
+    bgmStep = 0;
+
+    function tick() {
+      if (!bgmEnabled) return;
+      var st = comicPuzzleSteps[bgmStep % comicPuzzleSteps.length];
+      bgmStep++;
+      if (st.lead > 0) {
+        playSynthTone(st.lead, st.lead * 1.01, 0.088, "square", 0.017, 0, 2100, "lowpass");
+      }
+      if (st.bass > 0) {
+        playSynthTone(st.bass, st.bass * 1.03, 0.095, "triangle", 0.044, 0, 640, "lowpass");
+      }
+      if (st.blip > 0) {
+        playSynthTone(st.blip, st.blip * 0.92, 0.022, "triangle", 0.006, 0.06, 3200, "lowpass");
+      }
+    }
+    tick();
+    bgmTimer = setInterval(tick, 165);
+  }
+
+  function stopBgm() {
+    bgmAutoPausedByHidden = false;
+    bgmEnabled = false;
+    document.getElementById("btnBgm").textContent = "BGM: OFF";
+    if (bgmTimer) {
+      clearInterval(bgmTimer);
+      bgmTimer = null;
+    }
+  }
+
+  var bgmAutoPausedByHidden = false;
+
+  function pauseBgmForHidden() {
+    if (bgmEnabled) {
+      bgmAutoPausedByHidden = true;
+      bgmEnabled = false;
+      if (bgmTimer) {
+        clearInterval(bgmTimer);
+        bgmTimer = null;
+      }
+      var btn = document.getElementById("btnBgm");
+      if (btn) btn.textContent = "BGM: OFF";
+    }
+  }
+
+  function resumeBgmIfNeeded() {
+    if (bgmAutoPausedByHidden && !document.hidden) {
+      bgmAutoPausedByHidden = false;
+      startBgm();
+    }
+  }
+
+  function toggleBgm() {
+    bgmAutoPausedByHidden = false;
+    if (bgmEnabled) stopBgm();
+    else startBgm();
+  }
+
+  document.addEventListener("visibilitychange", function() {
+    if (document.hidden) {
+      pauseBgmForHidden();
+    } else {
+      resumeBgmIfNeeded();
+    }
+  });
+
+  window.addEventListener("blur", function() {
+    pauseBgmForHidden();
+  });
+
+  window.addEventListener("focus", function() {
+    resumeBgmIfNeeded();
+  });
+
+  function playSeCoinAndStartJingle() {
+    playSynthTone(987.77, 987.77, 0.055, "square", 0.055, 0.00, 4600, "lowpass");
+    playSynthTone(1318.51, 1318.51, 0.14, "square", 0.060, 0.065, 5200, "lowpass");
+    playSynthTone(523.25, 523.25, 0.075, "square", 0.052, 0.24, 4200, "lowpass");
+    playSynthTone(659.25, 659.25, 0.075, "square", 0.052, 0.325, 4400, "lowpass");
+    playSynthTone(783.99, 783.99, 0.075, "square", 0.052, 0.41, 4600, "lowpass");
+    playSynthTone(1046.50, 1052.00, 0.22, "square", 0.062, 0.495, 5200, "lowpass");
+  }
+
+  function playSeSelect() {
+    playSynthTone(1450, 920, 0.025, "square", 0.035, 0, 3200, "bandpass");
+    playAirVent(3800, 1400, 0.06, 0.055, 0.012, 4.0);
+  }
+
+  function playSeRotate() {
+    playSynthTone(1900, 780, 0.032, "sawtooth", 0.055, 0, 3600, "bandpass");
+    playAirVent(4600, 1100, 0.13, 0.095, 0.018, 3.0);
+  }
+
+  function playSePlace() {
+    playSynthTone(640, 210, 0.045, "square", 0.05, 0, 2200, "lowpass");
+    playAirVent(3400, 850, 0.16, 0.105, 0.025, 2.8);
+  }
+
+  function playSeConfirm() {
+    playSynthTone(1200, 1680, 0.03, "square", 0.045, 0, 3800, "bandpass");
+    playAirVent(5200, 1300, 0.14, 0.10, 0.025, 3.4);
+  }
+
+  function playSeScore(points) {
+    if (points < 0) {
+      playSeExplosion();
+      return;
+    }
+    var count = points >= 50 ? 4 : 3;
+    for (var i = 0; i < count; i++) {
+      playSynthTone(880 + i * 220, 1100 + i * 240, 0.045, "square", 0.04, i * 0.045, 3500, "bandpass");
+    }
+    playAirVent(4200, 1200, 0.14, 0.08, count * 0.045, 3.2);
+  }
+
+  function playSeStar() {
+    var notes = [1046.5, 1318.5, 1568.0, 2093.0];
+    for (var i = 0; i < notes.length; i++) {
+      playSynthTone(notes[i], notes[i] * 1.01, 0.11, "sine", 0.055, i * 0.04, 4800, "lowpass");
+    }
+    playAirVent(6400, 2400, 0.14, 0.04, 0.02, 4.5);
+  }
+
+  function playSeBlackHole() {
+    playSynthTone(520, 62, 0.34, "sawtooth", 0.095, 0, 720, "lowpass");
+    playSynthTone(310, 44, 0.36, "sine", 0.11, 0.03, 450, "lowpass");
+    playAirVent(1800, 260, 0.32, 0.11, 0.02, 2.2);
+  }
+
+  function playSeMoonRoulette() {
+    var steps = [660, 880, 1174, 990, 1318, 1760];
+    for (var i = 0; i < steps.length; i++) {
+      playSynthTone(steps[i], steps[i] * 1.03, 0.035, "triangle", 0.05, i * 0.042, 3600, "bandpass");
+    }
+  }
+
+  function playSeExplosion() {
+    playSynthTone(190, 42, 0.24, "sawtooth", 0.095, 0, 680, "lowpass");
+    playSynthTone(125, 36, 0.28, "square", 0.065, 0.015, 420, "lowpass");
+    playAirVent(3600, 480, 0.34, 0.145, 0.01, 2.0);
+  }
+
+  function playSeDestroyBlast() {
+    playSynthTone(240, 38, 0.26, "sawtooth", 0.11, 0, 820, "lowpass");
+    playSynthTone(140, 32, 0.30, "square", 0.075, 0.01, 480, "lowpass");
+    playAirVent(4400, 360, 0.36, 0.165, 0.008, 1.9);
+  }
+
+  function playSeEpicCombo(isFiveStr, isHundredPlus) {
+    var fanfare = isFiveStr
+      ? [783.99, 987.77, 1174.66, 1567.98, 2093.00]
+      : [880.00, 1108.73, 1318.51, 1760.00, 2217.46];
+    for (var i = 0; i < fanfare.length; i++) {
+      playSynthTone(fanfare[i], fanfare[i] * 1.02, 0.13, "square", 0.052, i * 0.048, 4600, "lowpass");
+      playSynthTone(fanfare[i] * 0.5, fanfare[i] * 0.5, 0.14, "triangle", 0.058, i * 0.048, 2200, "lowpass");
+    }
+    if (isHundredPlus) {
+      playSynthTone(135, 38, 0.28, "sawtooth", 0.125, 0.18, 560, "lowpass");
+      playSynthTone(82, 28, 0.36, "square", 0.105, 0.21, 320, "lowpass");
+      playAirVent(3600, 320, 0.30, 0.14, 0.18, 1.8);
+    } else {
+      playAirVent(6200, 1800, 0.22, 0.07, 0.08, 2.8);
+    }
+  }
+
+  function playSeMeteor() {
+    playSynthTone(1580, 210, 0.22, "sawtooth", 0.07, 0, 2800, "bandpass");
+    playAirVent(5600, 950, 0.20, 0.08, 0.01, 3.6);
+    playSynthTone(155, 32, 0.38, "sawtooth", 0.12, 0.17, 540, "lowpass");
+    playSynthTone(95, 26, 0.44, "square", 0.09, 0.18, 320, "lowpass");
+    playAirVent(3000, 280, 0.46, 0.17, 0.17, 1.7);
+  }
+
+  function playSeTrapArm() {
+    playSynthTone(1320, 1760, 0.035, "square", 0.045, 0, 4000, "highpass");
+    playSynthTone(420, 140, 0.07, "sawtooth", 0.06, 0.05, 1400, "lowpass");
+    playAirVent(3400, 900, 0.10, 0.075, 0.04, 3.5);
+  }
+
+  function playSeTrapTrigger() {
+    playSynthTone(1950, 1480, 0.045, "square", 0.065, 0, 4500, "highpass");
+    playSynthTone(1950, 1480, 0.045, "square", 0.065, 0.065, 4500, "highpass");
+    playSynthTone(185, 38, 0.26, "sawtooth", 0.105, 0.11, 640, "lowpass");
+    playAirVent(3800, 420, 0.32, 0.15, 0.11, 2.0);
+  }
+
+  function playSeShuffle() {
+    for (var i = 0; i < 3; i++) {
+      playSynthTone(950 - i * 180, 420, 0.05, "square", 0.04, i * 0.075, 2400, "lowpass");
+      playAirVent(4800 - i * 800, 900, 0.12, 0.09, i * 0.075 + 0.01, 3.0);
+    }
+  }
+
+  function playSeGameOver(outcome) {
+    if (outcome === "win") {
+      var notes = [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5];
+      var times = [0, 0.08, 0.16, 0.24, 0.36, 0.45];
+      var durs  = [0.07, 0.07, 0.07, 0.10, 0.07, 0.28];
+      for (var i = 0; i < notes.length; i++) {
+        playSynthTone(notes[i], notes[i] * 1.01, durs[i], "square", 0.055, times[i], 4200, "lowpass");
+        playSynthTone(notes[i] * 0.5, notes[i] * 0.5, durs[i] + 0.02, "triangle", 0.05, times[i], 2000, "lowpass");
+      }
+    } else if (outcome === "draw") {
+      var drawNotes = [523.25, 659.25, 783.99, 659.25];
+      var drawTimes = [0, 0.11, 0.22, 0.34];
+      var drawDurs  = [0.09, 0.09, 0.10, 0.24];
+      for (var k = 0; k < drawNotes.length; k++) {
+        playSynthTone(drawNotes[k], drawNotes[k], drawDurs[k], "triangle", 0.055, drawTimes[k], 3200, "lowpass");
+      }
+    } else {
+      var downNotes = [440.0, 392.0, 349.23, 261.63];
+      var downTimes = [0, 0.12, 0.24, 0.38];
+      var downDurs  = [0.10, 0.10, 0.12, 0.34];
+      for (var j = 0; j < downNotes.length; j++) {
+        playSynthTone(downNotes[j], downNotes[j] * 0.94, downDurs[j], "sawtooth", 0.05, downTimes[j], 2200, "lowpass");
+        playSynthTone(downNotes[j] * 0.5, downNotes[j] * 0.9, downDurs[j] + 0.02, "triangle", 0.055, downTimes[j], 1200, "lowpass");
+      }
+    }
+  }
+
+  function showGameOverOverlay(winner, goal, endReason) {
+    var overlay = document.getElementById("gameOverOverlay");
+    var card = document.getElementById("gameOverCard");
+    var ribbon = document.getElementById("goRibbon");
+    var banner = document.getElementById("goBanner");
+    var sub = document.getElementById("goSub");
+    var s1 = document.getElementById("goScore1");
+    var s2 = document.getElementById("goScore2");
+    var newBtn = document.getElementById("btnNew");
+    if (!overlay || !card || !banner) return;
+
+    var outcome = winner === 1 ? "win" : (winner === "draw" ? "draw" : "lose");
+    card.classList.remove("win", "lose", "draw", "fx-card-blink");
+    card.classList.add(outcome);
+    void card.offsetWidth;
+    card.classList.add("fx-card-blink");
+
+    if (endReason === "no_empty") {
+      if (ribbon) {
+        ribbon.textContent = outcome === "win" ? "BOARD FULL • VICTORY" : (outcome === "draw" ? "BOARD FULL • EVEN" : "BOARD FULL • DEFEAT");
+      }
+      if (outcome === "win") {
+        banner.textContent = "YOU WIN!";
+        if (sub) sub.textContent = "No empty cells left! PLAYER leads " + scores[1] + " - " + scores[2] + " (Goal: " + goal + " pt)";
+      } else if (outcome === "draw") {
+        banner.textContent = "DRAW!";
+        if (sub) sub.textContent = "No empty cells left! Tied at " + scores[1] + " - " + scores[2] + " (Goal: " + goal + " pt)";
+      } else {
+        banner.textContent = "GAME OVER";
+        if (sub) sub.textContent = "No empty cells left! CPU leads " + scores[2] + " - " + scores[1] + " (Goal: " + goal + " pt)";
+      }
+    } else {
+      if (ribbon) ribbon.textContent = outcome === "win" ? "STAGE CLEAR" : "GOAL REACHED";
+      banner.textContent = outcome === "win" ? "YOU WIN!" : "GAME OVER";
+      if (sub) sub.textContent = (outcome === "win" ? "PLAYER" : "CPU") + " reached Goal: " + goal + " pt!";
+    }
+
+    if (s1) s1.textContent = scores[1];
+    if (s2) s2.textContent = scores[2];
+    if (newBtn) newBtn.classList.add("rematch-pulse");
+
+    overlay.classList.add("show");
+    overlay.setAttribute("aria-hidden", "false");
+    triggerBoardClass("fx-gameover-flash", 680);
+    playSeGameOver(outcome);
+  }
+
+  function hideGameOverOverlay() {
+    var overlay = document.getElementById("gameOverOverlay");
+    var card = document.getElementById("gameOverCard");
+    if (card) card.classList.remove("fx-card-blink");
+    if (overlay) {
+      overlay.classList.remove("show");
+      overlay.setAttribute("aria-hidden", "true");
+    }
+  }
+
+  var isLandscape = false;
+  var moonRouletteAll = false;
+  var cpuDifficulty = "normal";
+  var CPU_DIFF_ORDER = ["easy", "normal", "hard"];
+  var ROWS = 7;
+  var COLS = 7;
+  var DR = [-1, 0, 1, 0];
+  var DC = [0, 1, 0, -1];
+  var OPP = [2, 3, 0, 1];
+
+  var board = [];
+  var luckyMap = [];
+  var minusMap = [];
+  var rouletteMap = [];
+  var trapMap = [];
+  var scores = { 1: 0, 2: 0 };
+  var hands = { 1: [], 2: [] };
+  var stageConfirmed = false;
+  var matchStartEffectPlayed = false;
+  var turnPlayer = 1;
+  var turnCount = { 1: 0, 2: 0 };
+  var selectedHandIdx = 0;
+  var activeItem = null;
+  var gameOver = false;
+  var lastPlacedPos = null;
+  var draftMove = null;
+  var rotDraft = null;
+  var turnRotatedPos = null;
+  var glowCells = [];
+
+  var itemUsed = {
+    1: { rot: false, shf: false, trap: false, bomb: false },
+    2: { rot: false, shf: false, trap: false, bomb: false }
+  };
+  var cpuKnowsP1Trap = false;
+
+  var BOARD_TRANSIENT_CLASSES = [
+    "fx-game-start",
+    "fx-score-pulse",
+    "fx-meteor-shake",
+    "fx-shuffle-board",
+    "fx-star-board",
+    "fx-hole-board",
+    "fx-trap-board",
+    "fx-destroy-board",
+    "fx-epic-board",
+    "fx-hundred-frame",
+    "fx-gameover-flash"
+  ];
+  var boardFxTimer = null;
+
+  function clearBoardTransientClasses(boardEl) {
+    if (!boardEl) return;
+    for (var i = 0; i < BOARD_TRANSIENT_CLASSES.length; i++) {
+      boardEl.classList.remove(BOARD_TRANSIENT_CLASSES[i]);
+    }
+  }
+
+  function clearTrapAt(r, c) {
+    if (r >= 0 && r < ROWS && c >= 0 && c < COLS) {
+      trapMap[r][c] = 0;
+    }
+  }
+
+  function getCellElement(r, c) {
+    var boardEl = document.getElementById("board");
+    if (!boardEl) return null;
+    var idx = r * COLS + c;
+    return boardEl.children[idx] || null;
+  }
+
+  function triggerBoardClass(className, durationMs) {
+    var boardEl = document.getElementById("board");
+    if (!boardEl) return;
+    if (boardFxTimer) {
+      clearTimeout(boardFxTimer);
+      boardFxTimer = null;
+    }
+    clearBoardTransientClasses(boardEl);
+    void boardEl.offsetWidth;
+    boardEl.classList.add(className);
+    boardFxTimer = setTimeout(function() {
+      var el = document.getElementById("board");
+      if (el) el.classList.remove(className);
+      boardFxTimer = null;
+    }, durationMs || 520);
+  }
+
+  function syncBoardPersistentState() {
+    var boardEl = document.getElementById("board");
+    if (!boardEl) return;
+    var isRotMode = !!(activeItem === "rot" || rotDraft);
+    boardEl.classList.toggle("fx-rot-active", isRotMode);
+  }
+
+  function triggerTitleStartFlash() {
+    var titleEl = document.getElementById("gameTitleEl");
+    if (!titleEl) return;
+    titleEl.classList.remove("fx-title-start");
+    void titleEl.offsetWidth;
+    titleEl.classList.add("fx-title-start");
+    setTimeout(function() {
+      var el = document.getElementById("gameTitleEl");
+      if (el) el.classList.remove("fx-title-start");
+    }, 660);
+  }
+
+  function triggerCellClass(r, c, className, durationMs) {
+    var cellEl = getCellElement(r, c);
+    if (!cellEl) return;
+    cellEl.classList.remove(className);
+    void cellEl.offsetWidth;
+    cellEl.classList.add(className);
+    setTimeout(function() {
+      if (cellEl) cellEl.classList.remove(className);
+    }, durationMs || 520);
+  }
+
+  function spawnStarRipple(r, c) {
+    var boardEl = document.getElementById("board");
+    if (!boardEl) return;
+    var cellSize = boardEl.clientWidth / COLS;
+    var ring = document.createElement("div");
+    ring.className = "fx-star-ring";
+    ring.style.left = ((c + 0.5) * cellSize) + "px";
+    ring.style.top = ((r + 0.5) * cellSize) + "px";
+    boardEl.appendChild(ring);
+    setTimeout(function() {
+      if (ring.parentNode) ring.parentNode.removeChild(ring);
+    }, 500);
+  }
+
+  function spawnDestroyBlast(r, c) {
+    var boardEl = document.getElementById("board");
+    if (!boardEl) return;
+    var cellSize = boardEl.clientWidth / COLS;
+    var ring = document.createElement("div");
+    ring.className = "fx-destroy-blast-ring";
+    ring.style.left = ((c + 0.5) * cellSize) + "px";
+    ring.style.top = ((r + 0.5) * cellSize) + "px";
+    boardEl.appendChild(ring);
+    setTimeout(function() {
+      if (ring.parentNode) ring.parentNode.removeChild(ring);
+    }, 500);
+
+    triggerBoardClass("fx-destroy-board", 460);
+    triggerCellClass(r, c, "fx-meteor-blast", 460);
+  }
+
+  function spawnRainbowStarComets() {
+    var boardEl = document.getElementById("board");
+    if (!boardEl) return;
+    var w = boardEl.clientWidth || 280;
+    var h = boardEl.clientHeight || 280;
+
+    var streams = [
+      { x: w * 0.25, y: h * 0.22, delay: 0 },
+      { x: w * 0.55, y: h * 0.16, delay: 90 },
+      { x: w * 0.38, y: h * 0.48, delay: 170 }
+    ];
+
+    for (var i = 0; i < streams.length; i++) {
+      (function(st) {
+        setTimeout(function() {
+          if (!boardEl || !boardEl.parentNode) return;
+          var trail = document.createElement("div");
+          trail.className = "fx-rainbow-trail";
+          trail.style.left = (st.x - 110) + "px";
+          trail.style.top = (st.y - 5) + "px";
+          boardEl.appendChild(trail);
+
+          var star = document.createElement("div");
+          star.className = "fx-star-comet";
+          star.textContent = "\u2605";
+          star.style.left = st.x + "px";
+          star.style.top = st.y + "px";
+          boardEl.appendChild(star);
+
+          setTimeout(function() {
+            if (trail.parentNode) trail.parentNode.removeChild(trail);
+            if (star.parentNode) star.parentNode.removeChild(star);
+          }, 720);
+        }, st.delay);
+      })(streams[i]);
+    }
+  }
+
+  function runEpicComboFx(cells, isHundredPlus) {
+    if (isHundredPlus) {
+      triggerBoardClass("fx-hundred-frame", 760);
+      spawnRainbowStarComets();
+    } else {
+      triggerBoardClass("fx-epic-board", 660);
+    }
+    if (cells && cells.length > 0) {
+      for (var i = 0; i < cells.length; i++) {
+        triggerCellClass(cells[i][0], cells[i][1], "fx-epic-cell", 660);
+      }
+    }
+  }
+
+  function spawnMeteorStreakAndBlast(centerR, centerC) {
+    var boardEl = document.getElementById("board");
+    if (!boardEl) return;
+    var cellSize = boardEl.clientWidth / COLS;
+
+    var streak = document.createElement("div");
+    streak.className = "fx-meteor-streak";
+    streak.style.left = ((centerC + 0.5) * cellSize - 24) + "px";
+    streak.style.top = ((centerR + 0.5) * cellSize - 18) + "px";
+    boardEl.appendChild(streak);
+    setTimeout(function() {
+      if (streak.parentNode) streak.parentNode.removeChild(streak);
+    }, 380);
+
+    triggerBoardClass("fx-meteor-shake", 500);
+    for (var dr = -1; dr <= 1; dr++) {
+      for (var dc = -1; dc <= 1; dc++) {
+        var nr = centerR + dr;
+        var nc = centerC + dc;
+        if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) {
+          triggerCellClass(nr, nc, "fx-meteor-blast", 480);
+        }
+      }
+    }
+  }
+
+  function applyViewModeClass() {
+    var btn = document.getElementById("btnViewMode");
+    if (isLandscape) {
+      document.body.classList.add("landscape-mode");
+      ROWS = 7;
+      COLS = 9;
+      if (btn) {
+        btn.textContent = "Landscape (9x7)";
+        btn.classList.add("mode-active");
+      }
+    } else {
+      document.body.classList.remove("landscape-mode");
+      ROWS = 7;
+      COLS = 7;
+      if (btn) {
+        btn.textContent = "Portrait (7x7)";
+        btn.classList.remove("mode-active");
+      }
+    }
+  }
+
+  function applyMoonOptionClass() {
+    var btn = document.getElementById("btnMoonAll");
+    if (btn) {
+      btn.textContent = moonRouletteAll ? "Full Moon: ON" : "Full Moon: OFF";
+      if (moonRouletteAll) btn.classList.add("moon-active");
+      else btn.classList.remove("moon-active");
+    }
+  }
+
+  function toggleViewMode() {
+    playSeSelect();
+    isLandscape = !isLandscape;
+    applyViewModeClass();
+    prepareStageSelection();
+  }
+
+  function applyCpuDifficultyClass() {
+    var btn = document.getElementById("btnCpuDiff");
+    if (!btn) return;
+    btn.classList.remove("cpu-easy", "cpu-normal", "cpu-hard");
+    if (cpuDifficulty === "easy") {
+      btn.textContent = "EASY";
+      btn.classList.add("cpu-easy");
+    } else if (cpuDifficulty === "hard") {
+      btn.textContent = "HARD";
+      btn.classList.add("cpu-hard");
+    } else {
+      btn.textContent = "NORMAL";
+      btn.classList.add("cpu-normal");
+    }
+  }
+
+  function cycleCpuDifficulty() {
+    playSeSelect();
+    var idx = CPU_DIFF_ORDER.indexOf(cpuDifficulty);
+    cpuDifficulty = CPU_DIFF_ORDER[(idx + 1) % CPU_DIFF_ORDER.length];
+    applyCpuDifficultyClass();
+    addLog("CPU LEVEL -> " + cpuDifficulty.toUpperCase(), "#fbbf24");
+    scheduleCpuBackgroundPrecompute();
+  }
+
+  function toggleMoonRouletteAll() {
+    playSeSelect();
+    moonRouletteAll = !moonRouletteAll;
+    applyMoonOptionClass();
+    prepareStageSelection();
+  }
+
+  function addLog(msg, color) {
+    var box = document.getElementById("logBox");
+    if (!box) return;
+    var div = document.createElement("div");
+    div.style.color = color || "#cbd5e1";
+    div.textContent = msg;
+    box.insertBefore(div, box.firstChild);
+  }
+
+  function setStatus(msg) {
+    var el = document.getElementById("statusBar");
+    if (el) el.textContent = msg;
+  }
+
+  function createRandomTile(owner) {
+    var num = Math.floor(Math.random() * 5) + 1;
+    var r = Math.random();
+    var actualOwner = owner;
+    var isWild = false;
+    if (r < 0.08) {
+      actualOwner = 0;
+      isWild = true;
+    } else if (r < 0.25) {
+      actualOwner = 0;
+      isWild = false;
+    }
+    var legs = [0, 0, 0, 0];
+    var count = Math.floor(Math.random() * 3) + 1;
+    if (Math.random() < 0.15) count = 4;
+    var indices = [0, 1, 2, 3].sort(function() { return Math.random() - 0.5; });
+    for (var i = 0; i < count; i++) legs[indices[i]] = 1;
+    return { num: num, owner: actualOwner, wild: isWild, legs: legs };
+  }
+
+  function createStageRainbowTile() {
+    var num = Math.floor(Math.random() * 5) + 1;
+    var legs = [0, 0, 0, 0];
+    var count = Math.floor(Math.random() * 3) + 2;
+    var indices = [0, 1, 2, 3].sort(function() { return Math.random() - 0.5; });
+    for (var i = 0; i < count; i++) legs[indices[i]] = 1;
+    return { num: num, owner: 0, wild: false, legs: legs };
+  }
+
+  function rotateLegsCW(legs) {
+    return [legs[3], legs[0], legs[1], legs[2]];
+  }
+
+  function areLegsEqual(a, b) {
+    if (!a || !b || a.length !== 4 || b.length !== 4) return false;
+    return a[0] === b[0] && a[1] === b[1] && a[2] === b[2] && a[3] === b[3];
+  }
+
+  function getBoardTiles() {
+    var list = [];
+    for (var r = 0; r < ROWS; r++) {
+      for (var c = 0; c < COLS; c++) {
+        if (board[r][c] && board[r][c].tile) {
+          list.push({ r: r, c: c, tile: board[r][c].tile });
+        }
+      }
+    }
+    return list;
+  }
+
+  function canSetTrapAt(r, c) {
+    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return false;
+    if (board[r][c] !== null) return false;
+    if (trapMap[r][c] !== 0) return false;
+    return true;
+  }
+
+  function getValidTrapCells() {
+    var cells = [];
+    for (var r = 0; r < ROWS; r++) {
+      for (var c = 0; c < COLS; c++) {
+        if (canSetTrapAt(r, c)) {
+          cells.push([r, c]);
+        }
+      }
+    }
+    return cells;
+  }
+
+  function isBoardConnected() {
+    var visited = [];
+    var r, c;
+    for (r = 0; r < ROWS; r++) {
+      visited[r] = [];
+      for (c = 0; c < COLS; c++) visited[r][c] = false;
+    }
+    var totalOpen = 0;
+    var start = null;
+    for (r = 0; r < ROWS; r++) {
+      for (c = 0; c < COLS; c++) {
+        if (!board[r][c] || !board[r][c].wall) {
+          totalOpen++;
+          if (!start) start = [r, c];
+        }
+      }
+    }
+    if (!start) return false;
+    var q = [start];
+    visited[start[0]][start[1]] = true;
+    var count = 0;
+    while (q.length > 0) {
+      var cur = q.shift();
+      count++;
+      for (var d = 0; d < 4; d++) {
+        var nr = cur[0] + DR[d], nc = cur[1] + DC[d];
+        if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS && !visited[nr][nc]) {
+          if (!board[nr][nc] || !board[nr][nc].wall) {
+            visited[nr][nc] = true;
+            q.push([nr, nc]);
+          }
+        }
+      }
+    }
+    return count === totalOpen;
+  }
+
+  function generateStage() {
+    var r, c;
+    board = []; luckyMap = []; minusMap = []; rouletteMap = []; trapMap = [];
+    for (r = 0; r < ROWS; r++) {
+      board[r] = []; luckyMap[r] = []; minusMap[r] = []; rouletteMap[r] = []; trapMap[r] = [];
+      for (c = 0; c < COLS; c++) {
+        board[r][c] = null;
+        luckyMap[r][c] = false;
+        minusMap[r][c] = false;
+        rouletteMap[r][c] = false;
+        trapMap[r][c] = 0;
+      }
+    }
+
+    var centerR = Math.floor(ROWS / 2);
+    var centerC = Math.floor(COLS / 2);
+
+    var wallCandidates = [];
+    for (r = 0; r < ROWS; r++) {
+      for (c = 0; c < COLS; c++) {
+        if (r === centerR && c === centerC) continue;
+        wallCandidates.push([r, c]);
+      }
+    }
+    wallCandidates.sort(function() { return Math.random() - 0.5; });
+
+    var placedWalls = 0;
+    var targetWalls = isLandscape
+      ? (Math.floor(Math.random() * 6) + 8)
+      : (Math.floor(Math.random() * 5) + 6);
+
+    for (var i = 0; i < wallCandidates.length; i++) {
+      if (placedWalls >= targetWalls) break;
+      var wr = wallCandidates[i][0], wc = wallCandidates[i][1];
+      board[wr][wc] = { wall: true };
+      if (!isBoardConnected()) {
+        board[wr][wc] = null;
+      } else {
+        placedWalls++;
+      }
+    }
+
+    var emptyCells = [];
+    for (r = 0; r < ROWS; r++) {
+      for (c = 0; c < COLS; c++) {
+        if (!board[r][c]) emptyCells.push([r, c]);
+      }
+    }
+    emptyCells.sort(function() { return Math.random() - 0.5; });
+
+    var rouletteCount = isLandscape
+      ? (Math.floor(Math.random() * 2) + 2)
+      : (Math.floor(Math.random() * 2) + 1);
+    var luckyCount = isLandscape
+      ? (Math.floor(Math.random() * 4) + 4)
+      : (Math.floor(Math.random() * 3) + 3);
+    var minusCount = isLandscape
+      ? (Math.floor(Math.random() * 4) + 3)
+      : (Math.floor(Math.random() * 3) + 2);
+
+    var idxCursor = 0;
+    for (var qIdx = 0; qIdx < rouletteCount && idxCursor < emptyCells.length; qIdx++, idxCursor++) {
+      rouletteMap[emptyCells[idxCursor][0]][emptyCells[idxCursor][1]] = true;
+    }
+    for (var j = 0; j < luckyCount && idxCursor < emptyCells.length; j++, idxCursor++) {
+      if (moonRouletteAll) rouletteMap[emptyCells[idxCursor][0]][emptyCells[idxCursor][1]] = true;
+      else luckyMap[emptyCells[idxCursor][0]][emptyCells[idxCursor][1]] = true;
+    }
+    for (var m = 0; m < minusCount && idxCursor < emptyCells.length; m++, idxCursor++) {
+      if (moonRouletteAll) rouletteMap[emptyCells[idxCursor][0]][emptyCells[idxCursor][1]] = true;
+      else minusMap[emptyCells[idxCursor][0]][emptyCells[idxCursor][1]] = true;
+    }
+
+    if (idxCursor < emptyCells.length && Math.random() < 0.5) {
+      var rbPos = emptyCells[idxCursor];
+      board[rbPos[0]][rbPos[1]] = { tile: createStageRainbowTile() };
+    }
+  }
+
+  function shuffleBoardAndTiles(protectPos) {
+    var existingTiles = [];
+    var existingTraps = [];
+    var r, c, i;
+
+    for (r = 0; r < ROWS; r++) {
+      for (c = 0; c < COLS; c++) {
+        if (board[r][c] && board[r][c].tile) {
+          existingTiles.push(board[r][c].tile);
+        }
+        if (trapMap[r][c] !== 0) {
+          existingTraps.push(trapMap[r][c]);
+        }
+      }
+    }
+
+    var wallCount = 0;
+    var luckyCount = 0;
+    var minusCount = 0;
+    var rouletteCount = 0;
+
+    for (r = 0; r < ROWS; r++) {
+      for (c = 0; c < COLS; c++) {
+        if (board[r][c] && board[r][c].wall) wallCount++;
+        if (luckyMap[r][c]) luckyCount++;
+        if (minusMap[r][c]) minusCount++;
+        if (rouletteMap[r][c]) rouletteCount++;
+      }
+    }
+
+    var allCoords = [];
+    for (r = 0; r < ROWS; r++) {
+      for (c = 0; c < COLS; c++) {
+        allCoords.push([r, c]);
+      }
+    }
+
+    var bestLayout = null;
+    for (var attempt = 0; attempt < 25; attempt++) {
+      var shuffled = allCoords.slice().sort(function() { return Math.random() - 0.5; });
+      var tempBoard = [];
+      for (r = 0; r < ROWS; r++) {
+        tempBoard[r] = [];
+        for (c = 0; c < COLS; c++) tempBoard[r][c] = null;
+      }
+      var cursor = 0;
+      for (i = 0; i < wallCount && cursor < shuffled.length; i++, cursor++) {
+        tempBoard[shuffled[cursor][0]][shuffled[cursor][1]] = { wall: true };
+      }
+
+      var prevBoard = board;
+      board = tempBoard;
+      var connected = isBoardConnected();
+      board = prevBoard;
+
+      if (connected) {
+        bestLayout = { tempBoard: tempBoard };
+        break;
+      }
+    }
+
+    var finalBoard = [];
+    var finalLucky = [];
+    var finalMinus = [];
+    var finalRoulette = [];
+    var finalTrap = [];
+    for (r = 0; r < ROWS; r++) {
+      finalBoard[r] = [];
+      finalLucky[r] = [];
+      finalMinus[r] = [];
+      finalRoulette[r] = [];
+      finalTrap[r] = [];
+      for (c = 0; c < COLS; c++) {
+        finalBoard[r][c] = null;
+        finalLucky[r][c] = false;
+        finalMinus[r][c] = false;
+        finalRoulette[r][c] = false;
+        finalTrap[r][c] = 0;
+      }
+    }
+
+    var nonWallCoords = [];
+    if (bestLayout) {
+      for (r = 0; r < ROWS; r++) {
+        for (c = 0; c < COLS; c++) {
+          if (bestLayout.tempBoard[r][c] && bestLayout.tempBoard[r][c].wall) {
+            finalBoard[r][c] = { wall: true };
+          } else {
+            nonWallCoords.push([r, c]);
+          }
+        }
+      }
+    } else {
+      for (r = 0; r < ROWS; r++) {
+        for (c = 0; c < COLS; c++) {
+          if (board[r][c] && board[r][c].wall) {
+            finalBoard[r][c] = { wall: true };
+          } else {
+            nonWallCoords.push([r, c]);
+          }
+        }
+      }
+    }
+
+    nonWallCoords.sort(function() { return Math.random() - 0.5; });
+    var nIdx = 0;
+    for (i = 0; i < rouletteCount && nIdx < nonWallCoords.length; i++, nIdx++) {
+      finalRoulette[nonWallCoords[nIdx][0]][nonWallCoords[nIdx][1]] = true;
+    }
+    for (i = 0; i < luckyCount && nIdx < nonWallCoords.length; i++, nIdx++) {
+      if (moonRouletteAll) finalRoulette[nonWallCoords[nIdx][0]][nonWallCoords[nIdx][1]] = true;
+      else finalLucky[nonWallCoords[nIdx][0]][nonWallCoords[nIdx][1]] = true;
+    }
+    for (i = 0; i < minusCount && nIdx < nonWallCoords.length; i++, nIdx++) {
+      if (moonRouletteAll) finalRoulette[nonWallCoords[nIdx][0]][nonWallCoords[nIdx][1]] = true;
+      else finalMinus[nonWallCoords[nIdx][0]][nonWallCoords[nIdx][1]] = true;
+    }
+
+    var tileSlots = nonWallCoords.slice().sort(function() { return Math.random() - 0.5; });
+    var shuffledTiles = existingTiles.slice().sort(function() { return Math.random() - 0.5; });
+    var newLastPlaced = null;
+
+    for (i = 0; i < shuffledTiles.length && i < tileSlots.length; i++) {
+      var tr = tileSlots[i][0], tc = tileSlots[i][1];
+      finalBoard[tr][tc] = { tile: shuffledTiles[i] };
+      if (!newLastPlaced) newLastPlaced = [tr, tc];
+    }
+
+    board = finalBoard;
+    luckyMap = finalLucky;
+    minusMap = finalMinus;
+    rouletteMap = finalRoulette;
+    trapMap = finalTrap;
+
+    var trapOwnerQueue = existingTraps.slice();
+    for (i = 0; i < trapOwnerQueue.length; i++) {
+      var tOwner = trapOwnerQueue[i];
+      var validTrapCandidates = getValidTrapCells();
+      if (validTrapCandidates.length > 0) {
+        var picked = validTrapCandidates[Math.floor(Math.random() * validTrapCandidates.length)];
+        trapMap[picked[0]][picked[1]] = tOwner;
+      }
+    }
+
+    if (newLastPlaced) {
+      lastPlacedPos = newLastPlaced;
+    } else if (protectPos) {
+      lastPlacedPos = protectPos;
+    }
+  }
+
+  function triggerMeteorArea(centerR, centerC) {
+    for (var dr = -1; dr <= 1; dr++) {
+      for (var dc = -1; dc <= 1; dc++) {
+        var nr = centerR + dr;
+        var nc = centerC + dc;
+        if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) {
+          if (board[nr][nc] && board[nr][nc].tile) {
+            board[nr][nc] = null;
+          }
+          clearTrapAt(nr, nc);
+        }
+      }
+    }
+    lastPlacedPos = null;
+  }
+
+  function canPlaceTile(r, c, tile, player) {
+    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return false;
+    if (board[r][c] !== null) return false;
+    if (turnCount[player] === 0) return true;
+    var adjSameOrRainbow = false;
+    for (var d = 0; d < 4; d++) {
+      var nr = r + DR[d], nc = c + DC[d];
+      if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS && board[nr][nc] && board[nr][nc].tile) {
+        var adjOwner = board[nr][nc].tile.owner;
+        if (adjOwner === player || adjOwner === 0) adjSameOrRainbow = true;
+      }
+    }
+    return adjSameOrRainbow;
+  }
+
+  function getValidMoves(tile, player) {
+    var moves = [];
+    var r, c;
+    for (r = 0; r < ROWS; r++) {
+      for (c = 0; c < COLS; c++) {
+        if (canPlaceTile(r, c, tile, player)) moves.push({ r: r, c: c, penalty: false });
+      }
+    }
+    if (moves.length === 0) {
+      for (r = 0; r < ROWS; r++) {
+        for (c = 0; c < COLS; c++) {
+          if (board[r][c] === null) moves.push({ r: r, c: c, penalty: true });
+        }
+      }
+    }
+    return moves;
+  }
+
+  function canStepInSequence(fromNum, toNum, diff) {
+    return (toNum - fromNum) === diff;
+  }
+
+  function extractPlacedSimpleCycles(adj, n, placedIdx) {
+    var cycles = [];
+    var seenCycleKey = {};
+    var vis = [];
+    for (var i = 0; i < n; i++) vis[i] = false;
+
+    function dfsCycle(curr, path) {
+      for (var k = 0; k < adj[curr].length; k++) {
+        var nxt = adj[curr][k];
+        if (nxt === placedIdx) {
+          if (path.length >= 3) {
+            var fwd = path.slice();
+            var rev = [placedIdx].concat(path.slice(1).reverse());
+            var fwdKey = fwd.join("-");
+            var revKey = rev.join("-");
+            var canonKey = fwdKey < revKey ? fwdKey : revKey;
+            if (!seenCycleKey[canonKey]) {
+              seenCycleKey[canonKey] = true;
+              cycles.push(path.slice());
+            }
+          }
+        } else if (!vis[nxt]) {
+          vis[nxt] = true;
+          path.push(nxt);
+          dfsCycle(nxt, path);
+          path.pop();
+          vis[nxt] = false;
+        }
+      }
+    }
+
+    vis[placedIdx] = true;
+    dfsCycle(placedIdx, [placedIdx]);
+    return cycles;
+  }
+
+  function evaluateScoreWithFixedNumbers(sr, sc, player, fixedNumMap) {
+    if (!board[sr] || !board[sr][sc] || !board[sr][sc].tile) {
+      return { points: 0, rawGain: 0, hasYaku: false, yakuNames: [], involvedCells: [], triggeredTrapCoords: [], hasFiveStr: false, trapHit: false };
+    }
+
+    var enemy = player === 1 ? 2 : 1;
+    var visited = [];
+    var r, c, d, i, j;
+    for (r = 0; r < ROWS; r++) {
+      visited[r] = [];
+      for (c = 0; c < COLS; c++) visited[r][c] = false;
+    }
+
+    var comp = [];
+    var placedIdx = -1;
+    var q = [[sr, sc]];
+    visited[sr][sc] = true;
+
+    while (q.length > 0) {
+      var cur = q.shift();
+      var cr = cur[0], cc = cur[1];
+      var t = board[cr][cc].tile;
+      var effNum = (fixedNumMap && fixedNumMap[cr + "," + cc]) ? fixedNumMap[cr + "," + cc] : t.num;
+      var curIdx = comp.length;
+      if (cr === sr && cc === sc) placedIdx = curIdx;
+      comp.push({ r: cr, c: cc, tile: t, effNum: effNum });
+
+      for (d = 0; d < 4; d++) {
+        if (!t.legs[d]) continue;
+        var nr = cr + DR[d], nc = cc + DC[d];
+        if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS && !visited[nr][nc]) {
+          var cell = board[nr][nc];
+          if (cell && cell.tile) {
+            var nt = cell.tile;
+            if ((nt.owner === player || nt.owner === 0) && nt.legs[OPP[d]]) {
+              visited[nr][nc] = true;
+              q.push([nr, nc]);
+            }
+          }
+        }
+      }
+    }
+
+    var n = comp.length;
+    var totalPoints = 0;
+    var rawGain = 0;
+    var yakuNames = [];
+    var yakuTypesEstablished = {};
+    var involvedMap = {};
+    var triggeredTrapMap = {};
+    var hasFiveStr = false;
+
+    function collectTraps(idxList) {
+      for (var k = 0; k < idxList.length; k++) {
+        var it = comp[idxList[k]];
+        if (trapMap[it.r][it.c] === enemy) {
+          triggeredTrapMap[it.r + "," + it.c] = [it.r, it.c];
+        }
+      }
+    }
+
+    function applyHoleIfUsed(idxList) {
+      var usedMinus = false;
+      for (var k = 0; k < idxList.length; k++) {
+        var it = comp[idxList[k]];
+        if (minusMap[it.r][it.c]) {
+          usedMinus = true;
+        }
+      }
+      if (usedMinus) {
+        totalPoints -= 10;
+        yakuNames.push("HOLE-10");
+      }
+    }
+
+    function markCells(idxList) {
+      for (var k = 0; k < idxList.length; k++) {
+        var it = comp[idxList[k]];
+        involvedMap[it.r + "," + it.c] = true;
+      }
+    }
+
+    var adj = [];
+    for (i = 0; i < n; i++) adj[i] = [];
+    for (i = 0; i < n; i++) {
+      for (j = i + 1; j < n; j++) {
+        var dr = comp[j].r - comp[i].r;
+        var dc = comp[j].c - comp[i].c;
+        for (d = 0; d < 4; d++) {
+          if (DR[d] === dr && DC[d] === dc) {
+            if (comp[i].tile.legs[d] && comp[j].tile.legs[OPP[d]]) {
+              adj[i].push(j);
+              adj[j].push(i);
+            }
+          }
+        }
+      }
+    }
+
+    var allIndices = [];
+    for (i = 0; i < n; i++) allIndices.push(i);
+
+    var seqCandidates = [];
+    if (placedIdx >= 0) {
+      var usedFlags = [];
+      for (i = 0; i < n; i++) usedFlags[i] = false;
+
+      function exploreMaximalSeq(curr, path, diff, usedPlaced) {
+        var extended = false;
+        for (var k = 0; k < adj[curr].length; k++) {
+          var nxt = adj[curr][k];
+          if (!usedFlags[nxt]) {
+            if (canStepInSequence(comp[curr].effNum, comp[nxt].effNum, diff)) {
+              extended = true;
+              var nextUsed = usedPlaced || (nxt === placedIdx);
+              usedFlags[nxt] = true;
+              path.push(nxt);
+              exploreMaximalSeq(nxt, path, diff, nextUsed);
+              path.pop();
+              usedFlags[nxt] = false;
+            }
+          }
+        }
+        if (!extended && usedPlaced && path.length >= 2) {
+          var firstIdx = path[0];
+          var canExtendStart = false;
+          for (var m = 0; m < adj[firstIdx].length; m++) {
+            var prevCand = adj[firstIdx][m];
+            if (!usedFlags[prevCand] && canStepInSequence(comp[prevCand].effNum, comp[firstIdx].effNum, diff)) {
+              canExtendStart = true;
+              break;
+            }
+          }
+          if (!canExtendStart) {
+            seqCandidates.push(path.slice());
+          }
+        }
+      }
+
+      for (i = 0; i < n; i++) {
+        usedFlags[i] = true;
+        exploreMaximalSeq(i, [i], 1, i === placedIdx);
+        exploreMaximalSeq(i, [i], -1, i === placedIdx);
+        usedFlags[i] = false;
+      }
+    }
+
+    var uniqueSeqPaths = [];
+    var seenSeqSig = {};
+    for (i = 0; i < seqCandidates.length; i++) {
+      var p = seqCandidates[i];
+      var sig = p.slice().sort(function(a, b) { return a - b; }).join("-");
+      if (!seenSeqSig[sig]) {
+        seenSeqSig[sig] = true;
+        uniqueSeqPaths.push(p);
+      }
+    }
+
+    for (i = 0; i < uniqueSeqPaths.length; i++) {
+      var sPath = uniqueSeqPaths[i];
+      var seqLen = sPath.length;
+      var seqPts = seqLen * 10;
+      totalPoints += seqPts;
+      rawGain += seqPts;
+      yakuNames.push("SEQ+" + seqPts);
+      if (seqLen >= 5) {
+        hasFiveStr = true;
+        totalPoints += 50;
+        rawGain += 50;
+        yakuNames.push("5-STR+50");
+      }
+      yakuTypesEstablished["SEQ"] = true;
+      markCells(sPath);
+      applyHoleIfUsed(sPath);
+      collectTraps(sPath);
+    }
+
+    if (placedIdx >= 0) {
+      var targetNum = comp[placedIdx].effNum;
+      var sameVisited = [];
+      for (i = 0; i < n; i++) sameVisited[i] = false;
+      var sameGroup = [placedIdx];
+      sameVisited[placedIdx] = true;
+      var sq = [placedIdx];
+      while (sq.length > 0) {
+        var u = sq.shift();
+        for (var k = 0; k < adj[u].length; k++) {
+          var v = adj[u][k];
+          if (!sameVisited[v] && comp[v].effNum === targetNum) {
+            sameVisited[v] = true;
+            sameGroup.push(v);
+            sq.push(v);
+          }
+        }
+      }
+      if (sameGroup.length >= 2) {
+        var samePts = sameGroup.length * 10;
+        totalPoints += samePts;
+        rawGain += samePts;
+        yakuNames.push("SAME+" + samePts);
+        yakuTypesEstablished["SAME"] = true;
+        markCells(sameGroup);
+        applyHoleIfUsed(sameGroup);
+        collectTraps(sameGroup);
+      }
+    }
+
+    if (placedIdx >= 0 && adj[placedIdx].length >= 2 && n >= 3) {
+      var foundCycles = extractPlacedSimpleCycles(adj, n, placedIdx);
+      for (var cIdx = 0; cIdx < foundCycles.length; cIdx++) {
+        var cycleNodes = foundCycles[cIdx];
+        var loopPts = cycleNodes.length * 10;
+        totalPoints += loopPts;
+        rawGain += loopPts;
+        yakuNames.push("LOOP+" + loopPts);
+        yakuTypesEstablished["LOOP"] = true;
+        markCells(cycleNodes);
+        applyHoleIfUsed(cycleNodes);
+        collectTraps(cycleNodes);
+      }
+    }
+
+    var isComplete = true;
+    for (i = 0; i < n; i++) {
+      var item = comp[i];
+      for (d = 0; d < 4; d++) {
+        if (item.tile.legs[d]) {
+          var nr2 = item.r + DR[d], nc2 = item.c + DC[d];
+          if (nr2 < 0 || nr2 >= ROWS || nc2 < 0 || nc2 >= COLS || !visited[nr2][nc2]) {
+            isComplete = false; break;
+          }
+          if (!board[nr2][nc2].tile.legs[OPP[d]]) {
+            isComplete = false; break;
+          }
+        }
+      }
+      if (!isComplete) break;
+    }
+    if (placedIdx >= 0 && isComplete && n >= 1) {
+      var compPts = n * 20;
+      totalPoints += compPts;
+      rawGain += compPts;
+      yakuNames.push("FULL+" + compPts);
+      yakuTypesEstablished["FULL"] = true;
+      markCells(allIndices);
+      applyHoleIfUsed(allIndices);
+      collectTraps(allIndices);
+    }
+
+    var yakuTypeCount = 0;
+    for (var ytKey in yakuTypesEstablished) {
+      if (yakuTypesEstablished.hasOwnProperty(ytKey)) {
+        yakuTypeCount++;
+      }
+    }
+
+    if (yakuTypeCount >= 2) {
+      var comboPts = (yakuTypeCount - 1) * 10;
+      totalPoints += comboPts;
+      rawGain += comboPts;
+      yakuNames.push("COMBO+" + comboPts);
+    }
+
+    var hasAnyYaku = yakuTypeCount > 0;
+    if (hasAnyYaku && luckyMap[sr][sc]) {
+      totalPoints += 10;
+      rawGain += 10;
+      yakuNames.push("STAR+10");
+      if (minusMap[sr][sc]) {
+        totalPoints -= 10;
+        yakuNames.push("HOLE-10");
+      }
+      if (trapMap[sr][sc] === enemy) {
+        triggeredTrapMap[sr + "," + sc] = [sr, sc];
+      }
+    }
+
+    var triggeredTrapCoords = [];
+    for (var tKey in triggeredTrapMap) {
+      if (triggeredTrapMap.hasOwnProperty(tKey)) {
+        triggeredTrapCoords.push(triggeredTrapMap[tKey]);
+      }
+    }
+
+    if (triggeredTrapCoords.length > 0) {
+      return {
+        points: -30,
+        rawGain: 0,
+        hasYaku: false,
+        yakuNames: ["TRAP-30"],
+        involvedCells: [[sr, sc]],
+        triggeredTrapCoords: triggeredTrapCoords,
+        hasFiveStr: false,
+        trapHit: true
+      };
+    }
+
+    if (hasAnyYaku) {
+      involvedMap[sr + "," + sc] = true;
+    }
+
+    var involvedCells = [];
+    for (var key in involvedMap) {
+      if (involvedMap.hasOwnProperty(key)) {
+        var parts = key.split(",");
+        involvedCells.push([parseInt(parts[0], 10), parseInt(parts[1], 10)]);
+      }
+    }
+
+    return {
+      points: totalPoints,
+      rawGain: rawGain,
+      hasYaku: hasAnyYaku,
+      yakuNames: yakuNames,
+      involvedCells: involvedCells,
+      triggeredTrapCoords: [],
+      hasFiveStr: hasFiveStr,
+      trapHit: false
+    };
+  }
+
+  function evaluateScore(sr, sc, player) {
+    if (!board[sr] || !board[sr][sc] || !board[sr][sc].tile) {
+      return { points: 0, rawGain: 0, hasYaku: false, yakuNames: [], involvedCells: [], triggeredTrapCoords: [], hasFiveStr: false, trapHit: false };
+    }
+
+    var wildCoords = [];
+    for (var r = 0; r < ROWS; r++) {
+      for (var c = 0; c < COLS; c++) {
+        if (board[r][c] && board[r][c].tile && board[r][c].tile.wild) {
+          wildCoords.push([r, c]);
+        }
+      }
+    }
+
+    if (wildCoords.length === 0) {
+      return evaluateScoreWithFixedNumbers(sr, sc, player, null);
+    }
+
+    var totalCombos = Math.pow(5, wildCoords.length);
+    var bestRes = null;
+
+    for (var mask = totalCombos - 1; mask >= 0; mask--) {
+      var temp = mask;
+      var fixedMap = {};
+      for (var w = 0; w < wildCoords.length; w++) {
+        var digit = (temp % 5) + 1;
+        temp = Math.floor(temp / 5);
+        fixedMap[wildCoords[w][0] + "," + wildCoords[w][1]] = digit;
+      }
+      var candRes = evaluateScoreWithFixedNumbers(sr, sc, player, fixedMap);
+      if (!bestRes || candRes.points > bestRes.points) {
+        bestRes = candRes;
+      }
+    }
+
+    return bestRes;
+  }
+
+  function showScorePopup(r, c, label, isEpic) {
+    var boardEl = document.getElementById("board");
+    if (!boardEl) return;
+    var cellSize = boardEl.clientWidth / COLS;
+    var leftPx = (c + 0.5) * cellSize;
+    var topPx = (r + 0.5) * cellSize;
+
+    var pop = document.createElement("div");
+    pop.className = "score-popup" + (isEpic ? " epic" : "");
+    pop.style.left = leftPx + "px";
+    pop.style.top = topPx + "px";
+    pop.textContent = label;
+    boardEl.appendChild(pop);
+
+    setTimeout(function() {
+      if (pop.parentNode) pop.parentNode.removeChild(pop);
+    }, 1300);
+  }
+
+  function finalizeMove(r, c, handIdx, tile, player, isPenalty) {
+    board[r][c] = {
+      tile: {
+        num: tile.num,
+        owner: tile.owner,
+        wild: !!tile.wild,
+        legs: tile.legs.slice()
+      }
+    };
+    lastPlacedPos = [r, c];
+    glowCells = [];
+    var pTag = player === 1 ? "P1" : "CPU";
+    var pColor = player === 1 ? "#60a5fa" : "#f87171";
+    var enemy = player === 1 ? 2 : 1;
+
+    if (isPenalty) {
+      scores[player] -= 50;
+      addLog(pTag + ": PENALTY (-50 pt)", "#fbbf24");
+      playSeExplosion();
+    }
+
+    var rouletteTriggered = false;
+    var rouletteResult = null;
+    if (rouletteMap[r][c]) {
+      rouletteMap[r][c] = false;
+      rouletteTriggered = true;
+      var roll = Math.random();
+      if (isLandscape) {
+        if (roll < 0.35) rouletteResult = "lucky";
+        else if (roll < 0.70) rouletteResult = "minus";
+        else if (roll < 0.85) rouletteResult = "shuffle";
+        else rouletteResult = "meteor";
+      } else {
+        if (roll < 0.35) rouletteResult = "lucky";
+        else if (roll < 0.70) rouletteResult = "minus";
+        else if (roll < 0.90) rouletteResult = "shuffle";
+        else rouletteResult = "meteor";
+      }
+
+      if (rouletteResult === "minus") {
+        minusMap[r][c] = true;
+        addLog("MOON [☾] -> HOLE (-10 pt)", "#e879f9");
+      } else if (rouletteResult === "lucky") {
+        luckyMap[r][c] = true;
+        addLog("MOON [☾] -> STAR (+10 pt)", "#fde047");
+      } else if (rouletteResult === "shuffle") {
+        addLog("MOON [☾] -> SHUFFLE (No Score)", "#c084fc");
+      } else if (rouletteResult === "meteor") {
+        addLog("MOON [☾] -> METEOR (3x3 Clear / No Score)", "#f43f5e");
+      }
+    }
+
+    var popupLabel = null;
+    var fxType = null;
+    var fxTargetCoord = [r, c];
+    var fxTrapCoords = [];
+    var fxEpicCells = [];
+    var isEpic = false;
+    var isHundredPlus = false;
+
+    if (rouletteResult === "shuffle") {
+      popupLabel = "SHUFFLE!";
+      fxType = "shuffle";
+      playSeMoonRoulette();
+      setTimeout(playSeShuffle, 170);
+      shuffleBoardAndTiles([r, c]);
+      if (lastPlacedPos) fxTargetCoord = [lastPlacedPos[0], lastPlacedPos[1]];
+      glowCells = [];
+    } else if (rouletteResult === "meteor") {
+      clearTrapAt(r, c);
+      popupLabel = "METEOR!";
+      fxType = "meteor";
+      playSeMoonRoulette();
+      setTimeout(playSeMeteor, 160);
+      triggerMeteorArea(r, c);
+      glowCells = [];
+    } else {
+      var res = evaluateScore(r, c, player);
+
+      if (res.trapHit) {
+        for (var tIdx = 0; tIdx < res.triggeredTrapCoords.length; tIdx++) {
+          var tc = res.triggeredTrapCoords[tIdx];
+          fxTrapCoords.push([tc[0], tc[1]]);
+          clearTrapAt(tc[0], tc[1]);
+        }
+        clearTrapAt(r, c);
+        scores[player] += res.points;
+        glowCells = res.involvedCells;
+        fxType = "trap";
+        playSeTrapTrigger();
+        addLog(pTag + ": TRAP TRIGGERED! (-30 pt / No Yaku)", "#f472b6");
+        popupLabel = "TRAP -30";
+      } else if (res.hasYaku) {
+        clearTrapAt(r, c);
+        scores[player] += res.points;
+        glowCells = res.involvedCells;
+        var signStr = res.points >= 0 ? ("+" + res.points) : String(res.points);
+        isHundredPlus = res.points >= 100;
+        isEpic = !!(res.hasFiveStr || isHundredPlus);
+        if (isEpic) {
+          fxEpicCells = res.involvedCells.slice();
+        }
+        addLog(pTag + ": " + res.yakuNames.join(" / ") + " = " + signStr + " pt" + (isHundredPlus ? " ★100+!!" : (isEpic ? " ★SPECIAL!" : "")), isEpic ? "#fef08a" : (res.points >= 0 ? pColor : "#fb7185"));
+        popupLabel = isHundredPlus
+          ? ("100+!! " + (res.hasFiveStr ? "5-STR " : "") + (rouletteTriggered ? ("☾ " + signStr) : signStr))
+          : (isEpic
+            ? ((res.hasFiveStr ? "5-STR! " : "") + (rouletteTriggered ? ("☾ " + signStr) : signStr))
+            : (rouletteTriggered ? ("☾ " + signStr) : signStr));
+
+        if (rouletteTriggered) {
+          fxType = "moon";
+          playSeMoonRoulette();
+          if (isEpic) {
+            setTimeout(function() { playSeEpicCombo(res.hasFiveStr, isHundredPlus); }, 180);
+          } else if (rouletteResult === "lucky") {
+            setTimeout(playSeStar, 180);
+          } else if (rouletteResult === "minus") {
+            setTimeout(playSeBlackHole, 180);
+          } else {
+            setTimeout(function() { playSeScore(res.points); }, 180);
+          }
+        } else if (isEpic) {
+          fxType = "epic";
+          playSeEpicCombo(res.hasFiveStr, isHundredPlus);
+        } else {
+          fxType = "score";
+          playSeScore(res.points);
+        }
+      } else {
+        clearTrapAt(r, c);
+        if (rouletteResult === "minus") {
+          popupLabel = "☾ HOLE";
+          fxType = "moon";
+          playSeMoonRoulette();
+          setTimeout(playSeBlackHole, 180);
+        } else if (rouletteResult === "lucky") {
+          popupLabel = "☾ STAR";
+          fxType = "moon";
+          playSeMoonRoulette();
+          setTimeout(playSeStar, 180);
+        } else if (!isPenalty) {
+          playSePlace();
+        }
+        addLog(pTag + ": PLACED [" + (tile.wild ? "☀" : tile.num) + "]", "#94a3b8");
+      }
+    }
+
+    function runPostRenderEffects(popR, popC) {
+      if (fxType === "moon") {
+        triggerCellClass(fxTargetCoord[0], fxTargetCoord[1], "fx-moon-spin", 460);
+      } else if (fxType === "shuffle") {
+        triggerBoardClass("fx-shuffle-board", 540);
+      } else if (fxType === "meteor") {
+        spawnMeteorStreakAndBlast(r, c);
+      } else if (fxType === "trap") {
+        triggerBoardClass("fx-trap-board", 480);
+        for (var k = 0; k < fxTrapCoords.length; k++) {
+          triggerCellClass(fxTrapCoords[k][0], fxTrapCoords[k][1], "fx-trap-detonate", 460);
+        }
+      } else if (fxType === "epic") {
+        runEpicComboFx(fxEpicCells, isHundredPlus);
+      } else if (fxType === "score") {
+        triggerBoardClass("fx-score-pulse", 380);
+      }
+      if (popupLabel) {
+        showScorePopup(popR, popC, popupLabel, isEpic);
+      }
+    }
+
+    hands[player][handIdx] = createRandomTile(player);
+    turnCount[player]++;
+
+    function countEmptyBoardCells() {
+      var cnt = 0;
+      for (var er = 0; er < ROWS; er++) {
+        for (var ec = 0; ec < COLS; ec++) {
+          if (board[er][ec] === null) cnt++;
+        }
+      }
+      return cnt;
+    }
+
+    function finishMatchWithResult(winner, goal, endReason, finishR, finishC) {
+      gameOver = true;
+      stopCpuBackgroundPrecompute();
+      turnRotatedPos = null;
+      updateUI();
+      runPostRenderEffects(finishR, finishC);
+      if (endReason === "no_empty") {
+        if (winner === 1) {
+          setStatus("BOARD FULL - PLAYER WINS! (" + scores[1] + " vs " + scores[2] + ", Goal: " + goal + " pt)");
+        } else if (winner === "draw") {
+          setStatus("DRAW! No empty cells left (" + scores[1] + " - " + scores[2] + ", Goal: " + goal + " pt)");
+        } else {
+          setStatus("BOARD FULL - CPU WINS! (" + scores[2] + " vs " + scores[1] + ", Goal: " + goal + " pt)");
+        }
+      } else {
+        setStatus("GAME OVER - " + (winner === 1 ? "PLAYER WINS!" : "CPU WINS!") + " (" + goal + " pt reached)");
+      }
+      setTimeout(function() {
+        if (gameOver) showGameOverOverlay(winner, goal, endReason);
+      }, 260);
+    }
+
+    var goal = parseInt(document.getElementById("goalSelect").value, 10);
+    var winner = null;
+    var endReason = null;
+    if (scores[1] >= goal && scores[2] >= goal) {
+      winner = scores[1] >= scores[2] ? 1 : 2;
+      endReason = "goal";
+    } else if (scores[1] >= goal) {
+      winner = 1;
+      endReason = "goal";
+    } else if (scores[2] >= goal) {
+      winner = 2;
+      endReason = "goal";
+    } else if (countEmptyBoardCells() === 0) {
+      endReason = "no_empty";
+      if (scores[1] > scores[2]) winner = 1;
+      else if (scores[2] > scores[1]) winner = 2;
+      else winner = "draw";
+    }
+
+    var popR = lastPlacedPos ? lastPlacedPos[0] : r;
+    var popC = lastPlacedPos ? lastPlacedPos[1] : c;
+
+    if (winner !== null) {
+      finishMatchWithResult(winner, goal, endReason, popR, popC);
+      return;
+    }
+
+    turnPlayer = enemy;
+    activeItem = null;
+    draftMove = null;
+    rotDraft = null;
+    turnRotatedPos = null;
+    updateUI();
+    runPostRenderEffects(popR, popC);
+
+    if (turnPlayer === 2 && !gameOver) {
+      stopCpuBackgroundPrecompute();
+      setStatus("CPU thinking...");
+      setTimeout(cpuTurn, 120);
+    } else {
+      setStatus("Select a tile, place it, click to rotate, then click CONFIRM.");
+      scheduleCpuBackgroundPrecompute();
+    }
+  }
+
+  function confirmStageAndDrawTurn() {
+    if (stageConfirmed) return;
+    stageConfirmed = true;
+    var isFirstMatchStart = !matchStartEffectPlayed;
+    if (isFirstMatchStart) {
+      matchStartEffectPlayed = true;
+      playSeCoinAndStartJingle();
+      triggerTitleStartFlash();
+      triggerBoardClass("fx-game-start", 650);
+    } else {
+      playSeConfirm();
+    }
+
+    var firstPlayer = Math.random() < 0.5 ? 1 : 2;
+    turnPlayer = firstPlayer;
+    turnCount = { 1: 0, 2: 0 };
+    selectedHandIdx = 0;
+    activeItem = null;
+    draftMove = null;
+    rotDraft = null;
+    turnRotatedPos = null;
+    glowCells = [];
+    gameOver = false;
+
+    if (firstPlayer === 1) {
+      addLog("TURN ORDER: P1 FIRST (50%)", "#38bdf8");
+      setStatus("You go FIRST! Select a tile, place it, click to rotate, then click CONFIRM.");
+      updateUI();
+      scheduleCpuBackgroundPrecompute();
+    } else {
+      addLog("TURN ORDER: CPU FIRST (50%)", "#f87171");
+      setStatus("CPU goes FIRST! CPU thinking...");
+      updateUI();
+      setTimeout(cpuTurn, 220);
+    }
+  }
+
+  function applyConfirmedRotationIfNeeded() {
+    if (!rotDraft) return null;
+    var steps = rotDraft.rotCount % 4;
+    var r = rotDraft.r;
+    var c = rotDraft.c;
+    if (steps === 0) {
+      if (board[r] && board[r][c] && board[r][c].tile) {
+        board[r][c].tile.legs = rotDraft.origLegs.slice();
+      }
+      rotDraft = null;
+      activeItem = null;
+      return null;
+    }
+    var curLegs = (board[r] && board[r][c] && board[r][c].tile) ? board[r][c].tile.legs.slice() : rotDraft.origLegs.slice();
+    var legsChanged = !areLegsEqual(rotDraft.origLegs, curLegs);
+    var costRot = ITEM_COSTS.rot;
+    itemUsed[1].rot = true;
+    scores[1] -= costRot;
+    var deg = steps * 90;
+    rotDraft = null;
+    activeItem = null;
+    turnRotatedPos = { coord: [r, c], legsChanged: legsChanged };
+    addLog("P1: ROTATE PIECE " + deg + "° (-" + costRot + " pt)" + (legsChanged ? "" : " [SAME LEGS]"), "#fbbf24");
+    triggerCellClass(r, c, "fx-piece-spin", 380);
+    return { r: r, c: c, deg: deg, legsChanged: legsChanged };
+  }
+
+  function confirmDraftMove() {
+    if (!stageConfirmed) {
+      confirmStageAndDrawTurn();
+      return;
+    }
+    if (gameOver || turnPlayer !== 1) return;
+
+    if (draftMove) {
+      stopCpuBackgroundPrecompute();
+      playSeConfirm();
+      applyConfirmedRotationIfNeeded();
+      var dm = draftMove;
+      draftMove = null;
+      finalizeMove(dm.r, dm.c, dm.handIdx, dm.tile, 1, dm.penalty);
+      return;
+    }
+
+    if (rotDraft) {
+      var steps = rotDraft.rotCount % 4;
+      if (steps === 0) {
+        if (board[rotDraft.r] && board[rotDraft.r][rotDraft.c] && board[rotDraft.r][rotDraft.c].tile) {
+          board[rotDraft.r][rotDraft.c].tile.legs = rotDraft.origLegs.slice();
+        }
+        rotDraft = null;
+        activeItem = null;
+        playSeSelect();
+        setStatus("Rotation reset (0°). Select a tile and click a green cell.");
+        updateUI();
+        scheduleCpuBackgroundPrecompute();
+        return;
+      }
+      rotDraft.committed = true;
+      activeItem = null;
+      playSeConfirm();
+      setStatus("Angle locked (" + (steps * 90) + "°). Now select a hand tile & cell, then press CONFIRM.");
+      updateUI();
+    }
+  }
+
+  function cancelDraftMove() {
+    if (draftMove) {
+      draftMove = null;
+      playSeSelect();
+      if (rotDraft && rotDraft.committed && (rotDraft.rotCount % 4) !== 0) {
+        setStatus("Placement cancelled. Angle (" + ((rotDraft.rotCount % 4) * 90) + "°) kept—select a tile & cell or press CANCEL.");
+      } else {
+        setStatus("Placement cancelled. Select a tile and click a green cell.");
+      }
+      updateUI();
+      scheduleCpuBackgroundPrecompute();
+      return;
+    }
+    if (rotDraft) {
+      if (board[rotDraft.r] && board[rotDraft.r][rotDraft.c] && board[rotDraft.r][rotDraft.c].tile) {
+        board[rotDraft.r][rotDraft.c].tile.legs = rotDraft.origLegs.slice();
+      }
+      rotDraft = null;
+      activeItem = null;
+      playSeSelect();
+      setStatus("Rotation cancelled. Select a tile and click a green cell.");
+      updateUI();
+      scheduleCpuBackgroundPrecompute();
+    }
+  }
+
+  var cpuEvalCache = {};
+  var cpuEvalCacheOrder = [];
+  var MAX_CPU_EVAL_CACHE = 4500;
+
+  var cpuCandidateCache = {};
+  var cpuBgTimer = null;
+  var cpuBgState = null;
+
+  function putCpuEvalCache(key, val) {
+    if (!cpuEvalCache.hasOwnProperty(key)) {
+      cpuEvalCacheOrder.push(key);
+      if (cpuEvalCacheOrder.length > MAX_CPU_EVAL_CACHE) {
+        var oldKey = cpuEvalCacheOrder.shift();
+        delete cpuEvalCache[oldKey];
+      }
+    }
+    cpuEvalCache[key] = val;
+  }
+
+  function resetAllCpuCaches() {
+    cpuEvalCache = {};
+    cpuEvalCacheOrder = [];
+    cpuCandidateCache = {};
+  }
+
+  function getGoalValue() {
+    var el = document.getElementById("goalSelect");
+    var val = el ? parseInt(el.value, 10) : 150;
+    return isNaN(val) ? 150 : val;
+  }
+
+  function getBoardSignatureForCpu() {
+    var parts = [];
+    for (var r = 0; r < ROWS; r++) {
+      for (var c = 0; c < COLS; c++) {
+        var cell = board[r][c];
+        if (!cell) {
+          parts.push(".");
+        } else if (cell.wall) {
+          parts.push("#");
+        } else if (cell.tile) {
+          var t = cell.tile;
+          parts.push(t.owner + ":" + (t.wild ? "W" : t.num) + ":" + t.legs.join(""));
+        }
+      }
+    }
+    return parts.join("|");
+  }
+
+  function getCpuHandSignature() {
+    return hands[2].map(function(t) {
+      return t.owner + ":" + (t.wild ? "W" : t.num) + ":" + t.legs.join("");
+    }).join(",");
+  }
+
+  function getConnectedRegionKeys(sr, sc) {
+    var visited = {};
+    var q = [[sr, sc]];
+    visited[sr + "," + sc] = true;
+    while (q.length > 0) {
+      var cur = q.shift();
+      var cr = cur[0], cc = cur[1];
+      for (var d = 0; d < 4; d++) {
+        var nr = cr + DR[d], nc = cc + DC[d];
+        if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
+        var k = nr + "," + nc;
+        if (visited[k]) continue;
+        var cell = board[nr][nc];
+        if (cell && cell.tile) {
+          visited[k] = true;
+          q.push([nr, nc]);
+        } else if (cell === null) {
+          visited[k] = true;
+        }
+      }
+    }
+    return visited;
+  }
+
+  function carryOverUnaffectedCandidates(prevBoardSig, prevDiff, prevTurn2, newBoardSig, changedCoords) {
+    if (!prevBoardSig || prevBoardSig === newBoardSig) return;
+    if (prevDiff !== cpuDifficulty || prevTurn2 !== turnCount[2]) return;
+    if (!changedCoords || changedCoords.length === 0) return;
+
+    var affectedMap = {};
+    for (var i = 0; i < changedCoords.length; i++) {
+      var cr = changedCoords[i][0], cc = changedCoords[i][1];
+      var reg = getConnectedRegionKeys(cr, cc);
+      for (var rk in reg) {
+        if (reg.hasOwnProperty(rk)) {
+          affectedMap[rk] = true;
+        }
+      }
+    }
+
+    var prefixOld = prevDiff + "|T" + prevTurn2 + "|" + prevBoardSig + "|";
+    var prefixNew = cpuDifficulty + "|T" + turnCount[2] + "|" + newBoardSig + "|";
+
+    var keys = Object.keys(cpuCandidateCache);
+    for (var kIdx = 0; kIdx < keys.length; kIdx++) {
+      var fullKey = keys[kIdx];
+      if (fullKey.indexOf(prefixOld) !== 0) continue;
+      var suffix = fullKey.slice(prefixOld.length);
+      var barIdx = suffix.indexOf("|");
+      if (barIdx < 0) continue;
+      var coordPart = suffix.slice(0, barIdx);
+      if (!affectedMap[coordPart]) {
+        var newFullKey = prefixNew + suffix;
+        if (!cpuCandidateCache.hasOwnProperty(newFullKey)) {
+          cpuCandidateCache[newFullKey] = cpuCandidateCache[fullKey];
+        }
+      }
+    }
+  }
+
+  function buildCandidateTasksForCpu(player) {
+    var tasks = [];
+    var isEasy = (player === 2 && cpuDifficulty === "easy");
+    for (var h = 0; h < hands[player].length; h++) {
+      var baseTile = hands[player][h];
+      var moves = getValidMoves(baseTile, player);
+      for (var i = 0; i < moves.length; i++) {
+        var m = moves[i];
+        var rotCount = isEasy ? 1 : 4;
+        var testLegs = baseTile.legs.slice();
+        var seenLegSig = {};
+        for (var rot = 0; rot < rotCount; rot++) {
+          var legSig = testLegs.join("");
+          if (!seenLegSig[legSig]) {
+            seenLegSig[legSig] = true;
+            tasks.push({
+              baseTile: baseTile,
+              h: h,
+              m: m,
+              legs: testLegs.slice()
+            });
+          }
+          testLegs = rotateLegsCW(testLegs);
+        }
+      }
+    }
+    return tasks;
+  }
+
+  function stopCpuBackgroundPrecompute() {
+    if (cpuBgTimer) {
+      clearTimeout(cpuBgTimer);
+      cpuBgTimer = null;
+    }
+    cpuBgState = null;
+  }
+
+  function scheduleCpuBackgroundPrecompute() {
+    stopCpuBackgroundPrecompute();
+    if (!stageConfirmed || gameOver || turnPlayer !== 1) return;
+    if (draftMove !== null || rotDraft !== null) return;
+
+    var startBoardSig = getBoardSignatureForCpu();
+    var startDiff = cpuDifficulty;
+    var startTurn2 = turnCount[2];
+    var startHandSig = getCpuHandSignature();
+
+    var tasks = buildCandidateTasksForCpu(2);
+    if (tasks.length === 0) return;
+
+    cpuBgState = {
+      boardSig: startBoardSig,
+      diff: startDiff,
+      turn2: startTurn2,
+      handSig: startHandSig,
+      tasks: tasks,
+      cursor: 0
+    };
+
+    function bgStep() {
+      cpuBgTimer = null;
+      if (!cpuBgState) return;
+      if (!stageConfirmed || gameOver || turnPlayer !== 1) {
+        cpuBgState = null;
+        return;
+      }
+      if (draftMove !== null || rotDraft !== null) {
+        cpuBgState = null;
+        return;
+      }
+
+      var curBoardSig = getBoardSignatureForCpu();
+      var curHandSig = getCpuHandSignature();
+
+      if (curBoardSig !== cpuBgState.boardSig || curHandSig !== cpuBgState.handSig || cpuDifficulty !== cpuBgState.diff) {
+        scheduleCpuBackgroundPrecompute();
+        return;
+      }
+
+      var isEasy = (cpuDifficulty === "easy");
+      var batchLimit = 3;
+      var processed = 0;
+
+      while (cpuBgState.cursor < cpuBgState.tasks.length && processed < batchLimit) {
+        var tk = cpuBgState.tasks[cpuBgState.cursor++];
+        var candKey = cpuBgState.diff + "|T" + cpuBgState.turn2 + "|" + curBoardSig + "|" + tk.m.r + "," + tk.m.c + "|" + tk.baseTile.owner + ":" + (tk.baseTile.wild ? "W" : tk.baseTile.num) + ":" + tk.legs.join("");
+        if (!cpuCandidateCache.hasOwnProperty(candKey)) {
+          var evaluated = scoreSingleCandidate(tk.baseTile, tk.h, tk.m, tk.legs, 2, isEasy);
+          cpuCandidateCache[candKey] = evaluated;
+          processed++;
+        }
+      }
+
+      if (cpuBgState.cursor < cpuBgState.tasks.length) {
+        cpuBgTimer = setTimeout(bgStep, 16);
+      } else {
+        cpuBgState = null;
+      }
+    }
+
+    cpuBgTimer = setTimeout(bgStep, 35);
+  }
+
+  function evaluateScoreCached(sr, sc, player) {
+    var key = "S|" + player + "|" + sr + "," + sc + "|" + getBoardSignatureForCpu();
+    if (cpuEvalCache.hasOwnProperty(key)) {
+      return cpuEvalCache[key];
+    }
+    var res = evaluateScore(sr, sc, player);
+    putCpuEvalCache(key, res);
+    return res;
+  }
+
+  function estimateThreatToPlayer(r, c, tile, player) {
+    var enemy = player === 1 ? 2 : 1;
+    board[r][c] = { tile: tile };
+    var threatKey = "T|" + player + "|" + r + "," + c + "|" + getBoardSignatureForCpu();
+    if (cpuEvalCache.hasOwnProperty(threatKey)) {
+      board[r][c] = null;
+      return cpuEvalCache[threatKey];
+    }
+
+    var maxEnemyGain = 0;
+    var sampleLegs = [1, 1, 1, 1];
+    for (var nr = 0; nr < ROWS; nr++) {
+      for (var nc = 0; nc < COLS; nc++) {
+        if (board[nr][nc] !== null) continue;
+        var hasAdjLink = false;
+        for (var d = 0; d < 4; d++) {
+          var ar = nr + DR[d], ac = nc + DC[d];
+          if (ar >= 0 && ar < ROWS && ac >= 0 && ac < COLS && board[ar][ac] && board[ar][ac].tile) {
+            var at = board[ar][ac].tile;
+            if ((at.owner === enemy || at.owner === 0) && at.legs[OPP[d]]) {
+              hasAdjLink = true;
+              break;
+            }
+          }
+        }
+        if (!hasAdjLink) continue;
+
+        for (var num = 1; num <= 5; num++) {
+          board[nr][nc] = { tile: { num: num, owner: enemy, wild: false, legs: sampleLegs } };
+          var enemyRes = evaluateScoreCached(nr, nc, enemy);
+          board[nr][nc] = null;
+          if (enemyRes.points > maxEnemyGain) {
+            maxEnemyGain = enemyRes.points;
+          }
+        }
+      }
+    }
+    board[r][c] = null;
+    putCpuEvalCache(threatKey, maxEnemyGain);
+    return maxEnemyGain;
+  }
+
+  function analyzeSelfConnection(r, c, tile, player) {
+    var enemy = player === 1 ? 2 : 1;
+    var connectedToAlly = false;
+    var connectedCount = 0;
+    var openFutureLinks = 0;
+    var synergy = 0;
+    var blockEnemyCount = 0;
+    var stealRainbowBonus = 0;
+    var loopSeedBonus = 0;
+
+    for (var d = 0; d < 4; d++) {
+      var nr = r + DR[d], nc = c + DC[d];
+      if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
+      var cell = board[nr][nc];
+
+      if (tile.legs[d]) {
+        if (cell && cell.tile) {
+          var nt = cell.tile;
+          if ((nt.owner === player || nt.owner === 0) && nt.legs[OPP[d]]) {
+            connectedToAlly = true;
+            connectedCount++;
+            synergy += 10;
+            if (nt.owner === 0) {
+              stealRainbowBonus += nt.wild ? 18 : 12;
+            }
+            if (tile.wild || nt.wild) {
+              synergy += 14;
+              loopSeedBonus += 5;
+            } else {
+              var diff = Math.abs(tile.num - nt.num);
+              if (diff === 0 || diff === 1) {
+                synergy += 13;
+                loopSeedBonus += 6;
+              }
+            }
+            for (var nd = 0; nd < 4; nd++) {
+              if (nd === OPP[d] || !nt.legs[nd]) continue;
+              var nnr = nr + DR[nd], nnc = nc + DC[nd];
+              if (nnr >= 0 && nnr < ROWS && nnc >= 0 && nnc < COLS && board[nnr][nnc] === null) {
+                openFutureLinks++;
+                synergy += 4;
+                loopSeedBonus += 3;
+              }
+            }
+          }
+        } else if (cell === null) {
+          openFutureLinks++;
+          synergy += 6;
+          if (luckyMap[nr][nc]) synergy += 7;
+          if (rouletteMap[nr][nc]) synergy += 3;
+        }
+      } else {
+        if (cell && cell.tile) {
+          var adjTile = cell.tile;
+          if (adjTile.legs[OPP[d]]) {
+            if (adjTile.owner === enemy) {
+              blockEnemyCount += 1.3;
+              if (adjTile.wild) blockEnemyCount += 1.2;
+            } else if (adjTile.owner === 0) {
+              blockEnemyCount += 0.9;
+            }
+          }
+        }
+      }
+    }
+
+    if (connectedCount >= 2) {
+      loopSeedBonus += (connectedCount - 1) * 10;
+      synergy += (connectedCount - 1) * 8;
+    }
+    if (typeof detectLoops === "function") {
+      try {
+        var foundLoops = detectLoops();
+        if (foundLoops && foundLoops.length > 0) {
+          loopSeedBonus += foundLoops.length * 24;
+          synergy += foundLoops.length * 16;
+        }
+      } catch (e) {}
+    }
+
+    return {
+      connectedToAlly: connectedToAlly,
+      connectedCount: connectedCount,
+      openFutureLinks: openFutureLinks,
+      hasAnyLinkPotential: connectedToAlly || openFutureLinks > 0,
+      synergy: synergy + loopSeedBonus,
+      loopSeedBonus: loopSeedBonus,
+      blockEnemyCount: blockEnemyCount,
+      stealRainbowBonus: stealRainbowBonus
+    };
+  }
+
+  function getMaxPlayerThreatAtCell(tr, tc, isRealisticHard) {
+    var maxGain = 0;
+    var legSets = isRealisticHard
+      ? [
+          [1, 1, 0, 0], [0, 1, 1, 0], [0, 0, 1, 1], [1, 0, 0, 1],
+          [1, 0, 1, 0], [0, 1, 0, 1],
+          [1, 1, 1, 0], [0, 1, 1, 1], [1, 0, 1, 1], [1, 1, 0, 1]
+        ]
+      : [[1, 1, 1, 1]];
+    for (var l = 0; l < legSets.length; l++) {
+      var legs = legSets[l];
+      for (var num = 1; num <= 5; num++) {
+        board[tr][tc] = { tile: { num: num, owner: 1, wild: false, legs: legs } };
+        var res = evaluateScoreCached(tr, tc, 1);
+        if (res.points > maxGain) {
+          maxGain = res.points;
+        }
+      }
+    }
+    board[tr][tc] = null;
+    return maxGain;
+  }
+
+  function countConnectedLinksForTile(r, c, tile, allowedOwners) {
+    if (!tile || !tile.legs) return 0;
+    var links = 0;
+    for (var d = 0; d < 4; d++) {
+      if (!tile.legs[d]) continue;
+      var nr = r + DR[d], nc = c + DC[d];
+      if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) {
+        var adj = board[nr][nc];
+        if (adj && adj.tile && adj.tile.legs[OPP[d]]) {
+          if (!allowedOwners || allowedOwners.indexOf(adj.tile.owner) !== -1) {
+            links++;
+          }
+        }
+      }
+    }
+    return links;
+  }
+
+  function canHandPlaceDirectlyAt(r, c, player) {
+    if (!hands[player] || hands[player].length === 0) return false;
+    for (var h = 0; h < hands[player].length; h++) {
+      var moves = getValidMoves(hands[player][h], player);
+      for (var i = 0; i < moves.length; i++) {
+        if (moves[i].r === r && moves[i].c === c && !moves[i].penalty) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  function getFocusedTrapCandidatesForCpu(isEasy, isHard) {
+    var goal = getGoalValue();
+    var p1CloseToGoal = (goal - scores[1]) <= Math.max(45, goal * 0.25);
+    var focused = [];
+
+    for (var tr = 0; tr < ROWS; tr++) {
+      for (var tc = 0; tc < COLS; tc++) {
+        if (!canSetTrapAt(tr, tc)) continue;
+        var nearEnemyOrRainbow = false;
+        for (var d = 0; d < 4; d++) {
+          var nr = tr + DR[d], nc = tc + DC[d];
+          if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS && board[nr][nc] && board[nr][nc].tile) {
+            var ow = board[nr][nc].tile.owner;
+            if (ow === 1 || ow === 0) {
+              nearEnemyOrRainbow = true;
+              break;
+            }
+          }
+        }
+        var highThreatCell = isHard && (p1CloseToGoal || getMaxPlayerThreatAtCell(tr, tc, true) >= 40);
+        if (nearEnemyOrRainbow || luckyMap[tr][tc] || rouletteMap[tr][tc] || highThreatCell) {
+          focused.push([tr, tc]);
+        }
+      }
+    }
+
+    if (focused.length > 0) {
+      return focused.slice(0, isHard ? 16 : 12);
+    }
+    return getValidTrapCells().slice(0, 8);
+  }
+
+  function scoreTrapCandidateForCpu(tr, tc, isHard) {
+    var goal = getGoalValue();
+    var p1CloseToGoal = (goal - scores[1]) <= Math.max(45, goal * 0.25);
+    var score = Math.random() * (isHard ? 1.5 : 4.5);
+    if (luckyMap[tr][tc]) score += isHard ? 16 : 11;
+    if (rouletteMap[tr][tc]) score += isHard ? 8 : 6;
+
+    var adjP1 = 0;
+    for (var d = 0; d < 4; d++) {
+      var nr = tr + DR[d], nc = tc + DC[d];
+      if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) {
+        var cell = board[nr][nc];
+        if (cell && cell.tile) {
+          if (cell.tile.owner === 1) {
+            adjP1++;
+            score += isHard ? 17 : 13;
+            if (cell.tile.legs[OPP[d]]) {
+              score += isHard ? 18 : 7;
+            }
+          } else if (cell.tile.owner === 0) {
+            score += isHard ? 12 : 8;
+          }
+        }
+      }
+    }
+
+    if (isHard && (adjP1 > 0 || luckyMap[tr][tc] || p1CloseToGoal)) {
+      var p1Potential = getMaxPlayerThreatAtCell(tr, tc, true);
+      score += p1Potential * (p1CloseToGoal ? 0.95 : 0.72);
+    }
+
+    return score;
+  }
+
+  function evaluateHighScoreDestroyCandidatesHard(goal) {
+    var boardTiles = getBoardTiles();
+    if (boardTiles.length === 0) return null;
+
+    var ranked = boardTiles.map(function(bt) {
+      var links = countConnectedLinksForTile(bt.r, bt.c, bt.tile, [0, 1, 2]);
+      var priority = links * 15;
+      if (bt.tile.wild) priority += 22;
+      else if (bt.tile.owner === 0) priority += 14;
+      if (luckyMap[bt.r][bt.c]) priority += 11;
+      if (rouletteMap[bt.r][bt.c]) priority += 8;
+      if (minusMap[bt.r][bt.c]) priority += 6;
+      if (bt.tile.owner === 1) priority += 5;
+      return { bt: bt, priority: priority };
+    });
+
+    ranked.sort(function(a, b) { return b.priority - a.priority; });
+    var topCandidates = ranked.slice(0, 14);
+
+    var bestHighScorePlan = null;
+    var bestPlanMetric = -999999;
+
+    for (var idx = 0; idx < topCandidates.length; idx++) {
+      var bt = topCandidates[idx].bt;
+      var savedCell = board[bt.r][bt.c];
+      board[bt.r][bt.c] = null;
+
+      var bestRebuildPts = 0;
+      var bestRebuildVal = -999999;
+      var bestRebuildMove = null;
+
+      for (var hh = 0; hh < hands[2].length; hh++) {
+        var hTile = hands[2][hh];
+        var hMoves = getValidMoves(hTile, 2);
+        for (var mm = 0; mm < hMoves.length; mm++) {
+          if (hMoves[mm].penalty) continue;
+          var testLegs = hTile.legs.slice();
+          for (var rot = 0; rot < 4; rot++) {
+            var cand = scoreSingleCandidate(hTile, hh, hMoves[mm], testLegs, 2, false);
+            if (cand.points > bestRebuildPts || (cand.points === bestRebuildPts && cand.val > bestRebuildVal)) {
+              bestRebuildPts = cand.points;
+              bestRebuildVal = cand.val;
+              bestRebuildMove = cand;
+            }
+            testLegs = rotateLegsCW(testLegs);
+          }
+        }
+      }
+
+      board[bt.r][bt.c] = savedCell;
+
+      if (!bestRebuildMove || bestRebuildMove.penalty) continue;
+
+      var netAfterCost = bestRebuildPts - ITEM_COSTS.bomb;
+      var canReachGoal = ((scores[2] - ITEM_COSTS.bomb + bestRebuildPts) >= goal && bestRebuildPts > ITEM_COSTS.bomb);
+      var highBoardGain = (bestRebuildPts >= 95 && netAfterCost >= 55);
+
+      if (canReachGoal || highBoardGain) {
+        var metric = bestRebuildPts + (canReachGoal ? 400 : 0) + netAfterCost * 0.5;
+        if (metric > bestPlanMetric) {
+          bestPlanMetric = metric;
+          var ownerLabel = bt.tile.wild ? "WILD" : (bt.tile.owner === 0 ? "RAINBOW" : (bt.tile.owner === 2 ? "RED" : "BLUE"));
+          bestHighScorePlan = {
+            r: bt.r,
+            c: bt.c,
+            selfRebuild: bt.tile.owner === 2,
+            highScoreDestroy: true,
+            targetOwnerLabel: ownerLabel,
+            rebuildPts: bestRebuildPts,
+            netAfterCost: netAfterCost,
+            plannedMove: bestRebuildMove,
+            threatReduction: 0,
+            score: metric
+          };
+        }
+      }
+    }
+
+    return bestHighScorePlan;
+  }
+
+  function findBestDestroyPlanForCpu(isEasy, isHard) {
+    if (itemUsed[2].bomb || scores[2] < ITEM_COSTS.bomb) return null;
+
+    var goal = getGoalValue();
+    var cpuRem = goal - scores[2];
+    var p1Rem = goal - scores[1];
+    var isLongGoal = goal >= 300;
+    var boardTiles = getBoardTiles();
+    if (boardTiles.length === 0) return null;
+
+    // HARD 時のみ: 赤・青・虹（0/ワイルド）を問わず上位14枚から高得点狙いの破壊候補を評価
+    if (isHard) {
+      var highScorePlan = evaluateHighScoreDestroyCandidatesHard(goal);
+      if (highScorePlan) {
+        return highScorePlan;
+      }
+    }
+
+    // EASY: 全アイテム使用可能だが、スコアに十分な余裕がある場合のみ控えめに破壊
+    if (isEasy) {
+      if (scores[2] < ITEM_COSTS.bomb + 55 || scores[2] <= scores[1] + 30) return null;
+      var bestEasy = null;
+      var bestEasyScore = 0;
+      for (var eIdx = 0; eIdx < boardTiles.length; eIdx++) {
+        var et = boardTiles[eIdx];
+        if (et.tile.owner === 2) continue;
+        var eLinks = countConnectedLinksForTile(et.r, et.c, et.tile, [1, 0, 2]);
+        var eScore = eLinks * 14 + (et.tile.owner === 0 ? 10 : 8) + (luckyMap[et.r][et.c] ? 8 : 0);
+        if (eScore >= 36 && eScore > bestEasyScore) {
+          bestEasyScore = eScore;
+          bestEasy = {
+            r: et.r,
+            c: et.c,
+            selfRebuild: false,
+            threatReduction: eLinks * 10,
+            score: eScore
+          };
+        }
+      }
+      return bestEasy;
+    }
+
+    // NORMAL / HARD: 相手脅威の基準値を算出（HARDは現実的な2〜3本足で評価）
+    var baselineThreat = 0;
+    for (var r = 0; r < ROWS; r++) {
+      for (var c = 0; c < COLS; c++) {
+        if (board[r][c] === null) {
+          var th = getMaxPlayerThreatAtCell(r, c, isHard);
+          if (th > baselineThreat) baselineThreat = th;
+        }
+      }
+    }
+
+    var bestTarget = null;
+    var bestDestroyScore = 0;
+
+    for (var i = 0; i < boardTiles.length; i++) {
+      var bt = boardTiles[i];
+
+      // 自分のタイル破壊は HARD のみ、かつ「盤面95pt以上（差し引き+55pt以上）または破壊コスト40pt差し引き後に即ゴール」「2辺以上接続」「手札から直接置ける」条件を満たす場合のみ
+      if (bt.tile.owner === 2) {
+        if (!isHard) continue;
+        var ownLinks = countConnectedLinksForTile(bt.r, bt.c, bt.tile, [0, 1, 2]);
+        if (ownLinks < 2) continue;
+        if (!canHandPlaceDirectlyAt(bt.r, bt.c, 2)) continue;
+
+        var savedOwn = board[bt.r][bt.c];
+        board[bt.r][bt.c] = null;
+        var bestRebuildPts = 0;
+        var bestRebuildVal = -999999;
+        var bestOwnRebuildMove = null;
+
+        for (var hh = 0; hh < hands[2].length; hh++) {
+          var hTile = hands[2][hh];
+          var hMoves = getValidMoves(hTile, 2);
+          for (var mm = 0; mm < hMoves.length; mm++) {
+            if (hMoves[mm].penalty) continue;
+            var testLegs = hTile.legs.slice();
+            for (var rot = 0; rot < 4; rot++) {
+              var cand = scoreSingleCandidate(hTile, hh, hMoves[mm], testLegs, 2, false);
+              if (cand.points > bestRebuildPts || (cand.points === bestRebuildPts && cand.val > bestRebuildVal)) {
+                bestRebuildPts = cand.points;
+                bestRebuildVal = cand.val;
+                bestOwnRebuildMove = cand;
+              }
+              testLegs = rotateLegsCW(testLegs);
+            }
+          }
+        }
+        board[bt.r][bt.c] = savedOwn;
+
+        if (!bestOwnRebuildMove || bestOwnRebuildMove.penalty) continue;
+        var ownNetAfterCost = bestRebuildPts - ITEM_COSTS.bomb;
+        var canReachGoalByRebuild = ((scores[2] - ITEM_COSTS.bomb + bestRebuildPts) >= goal && bestRebuildPts > ITEM_COSTS.bomb);
+        var isBig95PlusCombo = (bestRebuildPts >= 95 && ownNetAfterCost >= 55);
+        if ((isBig95PlusCombo || canReachGoalByRebuild) && bestRebuildVal > bestDestroyScore) {
+          bestDestroyScore = bestRebuildVal;
+          bestTarget = {
+            r: bt.r,
+            c: bt.c,
+            selfRebuild: true,
+            rebuildPts: bestRebuildPts,
+            netAfterCost: ownNetAfterCost,
+            plannedMove: bestOwnRebuildMove,
+            threatReduction: 0,
+            score: bestRebuildVal
+          };
+        }
+        continue;
+      }
+
+      if (isHard && isLongGoal && cpuRem > 180 && p1Rem > 140 && scores[2] < 95) {
+        continue;
+      }
+
+      var p1ConnectedLinks = countConnectedLinksForTile(bt.r, bt.c, bt.tile, [1, 0]);
+      if (bt.tile.owner === 1 && p1ConnectedLinks === 0 && !luckyMap[bt.r][bt.c]) continue;
+
+      var savedCell = board[bt.r][bt.c];
+      board[bt.r][bt.c] = null;
+
+      var newMaxThreat = 0;
+      for (var rr = 0; rr < ROWS; rr++) {
+        for (var cc = 0; cc < COLS; cc++) {
+          if (board[rr][cc] === null) {
+            var th2 = getMaxPlayerThreatAtCell(rr, cc, isHard);
+            if (th2 > newMaxThreat) newMaxThreat = th2;
+          }
+        }
+      }
+
+      board[bt.r][bt.c] = savedCell;
+
+      var threatReduction = baselineThreat - newMaxThreat;
+      var destroyVal = threatReduction * 1.25 + p1ConnectedLinks * 13;
+      if (bt.tile.wild) destroyVal += 18;
+      else if (bt.tile.owner === 0) destroyVal += 9;
+      if (luckyMap[bt.r][bt.c]) destroyVal += 9;
+      if (p1Rem <= 60) destroyVal += 18;
+
+      var minThreatDrop = isHard ? 45 : 30;
+      var minBaseThreat = isHard ? 60 : 50;
+      var minDestroyVal = isHard ? (isLongGoal ? 68 : 58) : 45;
+      if ((threatReduction >= minThreatDrop || (baselineThreat >= minBaseThreat && destroyVal >= minDestroyVal)) && destroyVal > bestDestroyScore) {
+        bestDestroyScore = destroyVal;
+        bestTarget = {
+          r: bt.r,
+          c: bt.c,
+          selfRebuild: false,
+          threatReduction: threatReduction,
+          score: destroyVal
+        };
+      }
+    }
+
+    return bestTarget;
+  }
+
+  function scoreSingleCandidate(baseTile, h, m, testLegs, player, isEasy) {
+    var isHard = (player === 2 && cpuDifficulty === "hard");
+    var testTile = {
+      num: baseTile.num,
+      owner: baseTile.owner,
+      wild: !!baseTile.wild,
+      legs: testLegs.slice()
+    };
+    board[m.r][m.c] = { tile: testTile };
+    var res = evaluateScoreCached(m.r, m.c, player);
+    var conn = analyzeSelfConnection(m.r, m.c, testTile, player);
+    board[m.r][m.c] = null;
+
+    var enemyThreat = estimateThreatToPlayer(m.r, m.c, testTile, player);
+    var isSelfTile = testTile.owner === player;
+
+    var trapCaution = 0;
+    if (cpuKnowsP1Trap && res.rawGain >= 30) {
+      trapCaution = isEasy ? 1 : (isHard ? 7 : 4);
+    }
+
+    var rouletteAdjust = 0;
+    if (rouletteMap[m.r][m.c]) {
+      var chaosProb = 0.30;
+      var chaosRisk = chaosProb * (res.rawGain + 22);
+      if (res.rawGain >= 20 || scores[2] > scores[1]) {
+        rouletteAdjust = -chaosRisk;
+      } else {
+        rouletteAdjust = 3;
+      }
+    }
+
+    var goal = getGoalValue();
+    var canReachGoalNow = (player === 2 && (scores[2] + res.points) >= goal);
+    var p1CanReachGoalNext = (enemyThreat > 0 && (scores[1] + enemyThreat) >= goal);
+
+    var val;
+    if (isEasy) {
+      val = res.points * 1.15
+        + conn.synergy * 0.65
+        + rouletteAdjust * 0.5
+        - enemyThreat * 0.45
+        - trapCaution
+        - (m.penalty ? 80 : 0)
+        + Math.random() * 6;
+      if (isSelfTile) {
+        if (conn.connectedToAlly) val += 14;
+        else if (conn.openFutureLinks > 0) val += 6;
+        else val -= 90;
+      }
+    } else if (isHard) {
+      var hardBlockBonus = conn.blockEnemyCount * 15 + conn.stealRainbowBonus;
+      var finishBonus = canReachGoalNow ? 500 : 0;
+      var antiFinishPenalty = p1CanReachGoalNext ? (enemyThreat * 1.4) : 0;
+
+      val = res.points * 1.55
+        + conn.synergy * 1.2
+        + hardBlockBonus
+        + rouletteAdjust
+        + finishBonus
+        - enemyThreat * 0.95
+        - antiFinishPenalty
+        - trapCaution
+        - (m.penalty ? 95 : 0)
+        + (minusMap[m.r][m.c] && !res.hasYaku && !res.trapHit ? 7 : 0)
+        + Math.random() * 0.5;
+
+      if (isSelfTile) {
+        if (conn.connectedToAlly) val += 28;
+        else if (conn.openFutureLinks > 0) val += 13;
+        else val -= 135;
+      }
+    } else {
+      val = res.points * 1.4
+        + conn.synergy
+        + rouletteAdjust
+        - enemyThreat * 0.45
+        - trapCaution
+        - (m.penalty ? 80 : 0)
+        + (minusMap[m.r][m.c] && !res.hasYaku && !res.trapHit ? 6 : 0)
+        + Math.random() * 2;
+
+      if (isSelfTile) {
+        if (conn.connectedToAlly) val += 25;
+        else if (conn.openFutureLinks > 0) val += 12;
+        else val -= 120;
+      }
+    }
+
+    return {
+      r: m.r,
+      c: m.c,
+      h: h,
+      penalty: m.penalty,
+      tile: testTile,
+      points: res.points,
+      val: val,
+      isValidSelfOrRainbow: (!isSelfTile) || conn.hasAnyLinkPotential
+    };
+  }
+
+  function evaluateCandidatesChunked(player, onDone, skipCache) {
+    var tasks = buildCandidateTasksForCpu(player);
+    var isEasy = (player === 2 && cpuDifficulty === "easy");
+    var isNormal = (player === 2 && cpuDifficulty === "normal");
+    var curBoardSig = (!skipCache && player === 2) ? getBoardSignatureForCpu() : null;
+
+    var list = [];
+    var cursor = 0;
+    var chunkSize = isNormal ? 14 : 10;
+
+    function step() {
+      if (gameOver || !stageConfirmed) return;
+      var end = Math.min(cursor + chunkSize, tasks.length);
+      for (; cursor < end; cursor++) {
+        var tk = tasks[cursor];
+        if (curBoardSig) {
+          var candKey = cpuDifficulty + "|T" + turnCount[2] + "|" + curBoardSig + "|" + tk.m.r + "," + tk.m.c + "|" + tk.baseTile.owner + ":" + (tk.baseTile.wild ? "W" : tk.baseTile.num) + ":" + tk.legs.join("");
+          if (cpuCandidateCache.hasOwnProperty(candKey)) {
+            var cached = cpuCandidateCache[candKey];
+            list.push({
+              r: cached.r,
+              c: cached.c,
+              h: tk.h,
+              penalty: tk.m.penalty,
+              tile: cached.tile,
+              points: cached.points,
+              val: cached.val,
+              isValidSelfOrRainbow: cached.isValidSelfOrRainbow
+            });
+            continue;
+          }
+          var computed = scoreSingleCandidate(tk.baseTile, tk.h, tk.m, tk.legs, player, isEasy);
+          cpuCandidateCache[candKey] = computed;
+          list.push(computed);
+        } else {
+          list.push(scoreSingleCandidate(tk.baseTile, tk.h, tk.m, tk.legs, player, isEasy));
+        }
+      }
+      if (cursor < tasks.length) {
+        setTimeout(step, 0);
+      } else {
+        onDone(list);
+      }
+    }
+
+    step();
+  }
+
+  function pickBestFromCandidates(allCandidates) {
+    var preferredCandidates = allCandidates.filter(function(cand) {
+      return cand.isValidSelfOrRainbow;
+    });
+    var pool = preferredCandidates.length > 0 ? preferredCandidates : allCandidates;
+    var bestMove = null;
+    var bestVal = -999999;
+    for (var p = 0; p < pool.length; p++) {
+      if (pool[p].val > bestVal) {
+        bestVal = pool[p].val;
+        bestMove = pool[p];
+      }
+    }
+    return bestMove;
+  }
+
+  function isTilePromisingForRotation(bt, isHard) {
+    var hasEmptyAdj = false;
+    var hasCompatibleAdj = false;
+    for (var d = 0; d < 4; d++) {
+      var nr = bt.r + DR[d], nc = bt.c + DC[d];
+      if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
+      var cell = board[nr][nc];
+      if (cell === null) {
+        hasEmptyAdj = true;
+      } else if (cell && cell.tile) {
+        var at = cell.tile;
+        if (at.owner === 0 || at.owner === 2 || bt.tile.owner === 0 || bt.tile.owner === 2) {
+          hasCompatibleAdj = true;
+        } else if (bt.tile.wild || at.wild || Math.abs(bt.tile.num - at.num) <= 1) {
+          hasCompatibleAdj = true;
+        }
+      }
+    }
+    if (!hasEmptyAdj) return false;
+    return isHard ? true : hasCompatibleAdj;
+  }
+
+  function findBestRotatePiecePlanChunked(isHard, baselinePoints, baselineVal, onDone, skipForTimeBudget) {
+    if (skipForTimeBudget || itemUsed[2].rot || scores[2] < ITEM_COSTS.rot) {
+      onDone(null);
+      return;
+    }
+
+    var boardTiles = getBoardTiles();
+    if (boardTiles.length === 0) {
+      onDone(null);
+      return;
+    }
+
+    var promisingTiles = boardTiles.filter(function(bt) {
+      return isTilePromisingForRotation(bt, isHard);
+    });
+    var searchTargets = promisingTiles.length > 0 ? promisingTiles : [];
+    if (searchTargets.length === 0) {
+      onDone(null);
+      return;
+    }
+    if (!isHard && searchTargets.length > 6) {
+      searchTargets = searchTargets.slice(0, 6);
+    } else if (isHard && searchTargets.length > 8) {
+      searchTargets = searchTargets.slice(0, 8);
+    }
+
+    var bestPlan = null;
+    var bestNetScore = 0;
+    var minPointGain = isHard ? 10 : 25;
+    var minNetAdvantage = isHard ? -8 : 5;
+    var minValGain = isHard ? 12 : 18;
+    var minBestPoints = isHard ? 10 : 30;
+
+    var idx = 0;
+
+    function nextTarget() {
+      if (gameOver || !stageConfirmed) return;
+      if (idx >= searchTargets.length) {
+        onDone(bestPlan);
+        return;
+      }
+
+      var target = searchTargets[idx++];
+      var origLegs = target.tile.legs.slice();
+      var rotStates = [];
+      var curL = origLegs.slice();
+      for (var st = 1; st <= 3; st++) {
+        curL = rotateLegsCW(curL);
+        if (!areLegsEqual(curL, origLegs)) {
+          rotStates.push({ steps: st, legs: curL.slice() });
+        }
+      }
+
+      var sIdx = 0;
+      function nextRotState() {
+        if (gameOver || !stageConfirmed) return;
+        if (sIdx >= rotStates.length) {
+          setTimeout(nextTarget, 0);
+          return;
+        }
+        var rState = rotStates[sIdx++];
+        target.tile.legs = rState.legs;
+
+        evaluateCandidatesChunked(2, function(rotCandidates) {
+          target.tile.legs = origLegs;
+          var bestWithRot = pickBestFromCandidates(rotCandidates);
+
+          if (bestWithRot) {
+            var pointGain = bestWithRot.points - baselinePoints;
+            var valGain = bestWithRot.val - baselineVal;
+            var netAdvantage = pointGain - ITEM_COSTS.rot;
+
+            var hardDisruptRotate = isHard && (valGain >= 22 && bestWithRot.val > baselineVal + 16);
+            var normalScoreRotate = (pointGain >= minPointGain && netAdvantage >= minNetAdvantage && valGain > minValGain && bestWithRot.points >= minBestPoints);
+
+            if (normalScoreRotate || hardDisruptRotate) {
+              var planScore = isHard ? (bestWithRot.points + valGain * 0.72 + pointGain * 0.35) : (bestWithRot.points + valGain * 0.25);
+              if (!bestPlan || planScore > bestNetScore) {
+                bestNetScore = planScore;
+                bestPlan = {
+                  rotR: target.r,
+                  rotC: target.c,
+                  rotDeg: rState.steps * 90,
+                  nextLegs: rState.legs,
+                  legsChanged: !areLegsEqual(origLegs, rState.legs),
+                  move: bestWithRot,
+                  pointGain: pointGain
+                };
+              }
+            }
+          }
+
+          setTimeout(nextRotState, 0);
+        }, true);
+      }
+
+      nextRotState();
+    }
+
+    nextTarget();
+  }
+
+  function hasWeakHandForCpu() {
+    var totalLinks = 0;
+    for (var h = 0; h < hands[2].length; h++) {
+      var t = hands[2][h];
+      if (t.wild || t.owner === 0) totalLinks += 2;
+      var legSum = 0;
+      for (var d = 0; d < 4; d++) if (t.legs[d]) legSum++;
+      totalLinks += legSum;
+    }
+    return totalLinks <= 7;
+  }
+
+  function finishCpuTurnWithMove(bestMove, didRotateForPlan, didDestroyForPlan, isEasy, isHard) {
+    var goal = getGoalValue();
+    var p1Rem = goal - scores[1];
+    var reachesGoalNow = !!(bestMove && (scores[2] + bestMove.points) >= goal);
+
+    if (!didRotateForPlan && !didDestroyForPlan && !reachesGoalNow && !itemUsed[2].trap && scores[2] >= ITEM_COSTS.trap && bestMove) {
+      var trapAllowed = isEasy
+        ? (bestMove.points < 35 && Math.random() < 0.65)
+        : (isHard ? (bestMove.points < 55 || p1Rem <= 60) : (bestMove.points < 35));
+
+      if (trapAllowed) {
+        var trapCandidates = getFocusedTrapCandidatesForCpu(isEasy, isHard);
+        if (trapCandidates.length > 0) {
+          var bestTrap = null;
+          var bestTrapScore = -999;
+          for (var tcIdx = 0; tcIdx < trapCandidates.length; tcIdx++) {
+            var candPos = trapCandidates[tcIdx];
+            if (candPos[0] === bestMove.r && candPos[1] === bestMove.c) continue;
+            var sc = scoreTrapCandidateForCpu(candPos[0], candPos[1], isHard);
+            if (sc > bestTrapScore) {
+              bestTrapScore = sc;
+              bestTrap = candPos;
+            }
+          }
+          var minTrapThreshold = isEasy ? 10 : (isHard ? (p1Rem <= 60 ? 18 : 22) : 14);
+          if (bestTrap && bestTrapScore >= minTrapThreshold) {
+            itemUsed[2].trap = true;
+            scores[2] -= ITEM_COSTS.trap;
+            trapMap[bestTrap[0]][bestTrap[1]] = 2;
+            playSeTrapArm();
+            triggerCellClass(bestTrap[0], bestTrap[1], "fx-trap-lock", 520);
+            addLog("CPU" + (isHard ? " [HARD]" : (isEasy ? " [EASY]" : "")) + ": TRAP (-" + ITEM_COSTS.trap + " pt)", "#f87171");
+          }
+        }
+      }
+    }
+
+    if (bestMove) {
+      finalizeMove(bestMove.r, bestMove.c, bestMove.h, bestMove.tile, 2, bestMove.penalty);
+    }
+  }
+
+  function cpuTurn() {
+    if (gameOver || !stageConfirmed) return;
+    stopCpuBackgroundPrecompute();
+
+    var isEasy = (cpuDifficulty === "easy");
+    var isHard = (cpuDifficulty === "hard");
+    var didDestroyForPlan = false;
+
+    var plannedDestroyMove = null;
+    if (!itemUsed[2].bomb && scores[2] >= ITEM_COSTS.bomb) {
+      var destroyTarget = findBestDestroyPlanForCpu(isEasy, isHard);
+      if (destroyTarget && board[destroyTarget.r][destroyTarget.c] && board[destroyTarget.r][destroyTarget.c].tile) {
+        itemUsed[2].bomb = true;
+        scores[2] -= ITEM_COSTS.bomb;
+        board[destroyTarget.r][destroyTarget.c] = null;
+        didDestroyForPlan = true;
+        plannedDestroyMove = destroyTarget.plannedMove || null;
+        cpuCandidateCache = {};
+        playSeDestroyBlast();
+        addLog("CPU" + (isHard ? " [HARD]" : (isEasy ? " [EASY]" : "")) + ": DESTROY (-" + ITEM_COSTS.bomb + " pt" + (destroyTarget.highScoreDestroy ? (" / HIGH SCORE [" + destroyTarget.targetOwnerLabel + "] +" + destroyTarget.rebuildPts + "pt (net +" + destroyTarget.netAfterCost + "pt)") : (destroyTarget.selfRebuild ? " / SELF REBUILD" : " / Threat -" + destroyTarget.threatReduction)) + ")", "#f87171");
+        updateUI();
+        spawnDestroyBlast(destroyTarget.r, destroyTarget.c);
+      }
+    }
+
+    if (plannedDestroyMove) {
+      setTimeout(function() {
+        if (!gameOver && stageConfirmed) {
+          finishCpuTurnWithMove(plannedDestroyMove, false, true, isEasy, isHard);
+        }
+      }, 140);
+      return;
+    }
+
+    if (!didDestroyForPlan && !itemUsed[2].shf && scores[2] >= ITEM_COSTS.shf) {
+      var shouldShuffle = false;
+      if (isHard) {
+        shouldShuffle = hasWeakHandForCpu();
+      } else if (isEasy) {
+        shouldShuffle = hasWeakHandForCpu() && Math.random() < 0.35;
+      } else {
+        shouldShuffle = hasWeakHandForCpu() || (scores[2] >= ITEM_COSTS.shf + 15 && Math.random() < 0.30);
+      }
+      if (shouldShuffle) {
+        itemUsed[2].shf = true;
+        scores[2] -= ITEM_COSTS.shf;
+        hands[2] = [createRandomTile(2), createRandomTile(2), createRandomTile(2), createRandomTile(2)];
+        playSeShuffle();
+        addLog("CPU" + (isHard ? " [HARD]" : (isEasy ? " [EASY]" : "")) + ": SHUFFLE HAND (-" + ITEM_COSTS.shf + " pt)", "#f87171");
+      }
+    }
+
+    evaluateCandidatesChunked(2, function(baseCandidates) {
+      var bestBase = pickBestFromCandidates(baseCandidates);
+      var baselinePoints = bestBase ? bestBase.points : 0;
+      var baselineVal = bestBase ? bestBase.val : -999999;
+
+      var skipRotateForBudget = didDestroyForPlan && (scores[2] < 50 || getBoardTiles().length > 10);
+      if (isEasy && (getBoardTiles().length > 14 || Math.random() < 0.55)) {
+        skipRotateForBudget = true;
+      }
+
+      findBestRotatePiecePlanChunked(isHard, baselinePoints, baselineVal, function(rotPlan) {
+        if (rotPlan && board[rotPlan.rotR][rotPlan.rotC] && board[rotPlan.rotR][rotPlan.rotC].tile) {
+          itemUsed[2].rot = true;
+          scores[2] -= ITEM_COSTS.rot;
+          board[rotPlan.rotR][rotPlan.rotC].tile.legs = rotPlan.nextLegs;
+          playSeRotate();
+          triggerCellClass(rotPlan.rotR, rotPlan.rotC, "fx-piece-spin", 380);
+          addLog("CPU" + (isHard ? " [HARD]" : (isEasy ? " [EASY]" : "")) + ": ROTATE PIECE " + rotPlan.rotDeg + "° (-" + ITEM_COSTS.rot + " pt / +" + rotPlan.pointGain + " pt swing)", "#f87171");
+          finishCpuTurnWithMove(rotPlan.move, true, didDestroyForPlan, isEasy, isHard);
+        } else {
+          finishCpuTurnWithMove(bestBase, false, didDestroyForPlan, isEasy, isHard);
+        }
+      }, skipRotateForBudget);
+    }, false);
+  }
+
+  function selectItem(type) {
+    if (!stageConfirmed || gameOver || turnPlayer !== 1 || draftMove || rotDraft) return;
+    if (itemUsed[1][type]) {
+      setStatus("This item has already been used in this match.");
+      return;
+    }
+    if (activeItem === type) {
+      playSeSelect();
+      activeItem = null;
+      setStatus("Select a tile, place it, click to rotate, then click CONFIRM.");
+      updateUI();
+      return;
+    }
+    var cost = ITEM_COSTS[type];
+    if (scores[1] < cost) { setStatus("Not enough points!"); return; }
+
+    if (type === "shf") {
+      itemUsed[1].shf = true;
+      scores[1] -= cost;
+      hands[1] = [createRandomTile(1), createRandomTile(1), createRandomTile(1), createRandomTile(1)];
+      selectedHandIdx = 0;
+      playSeShuffle();
+      addLog("P1: SHUFFLE HAND (-" + cost + " pt)", "#fbbf24");
+      updateUI(); return;
+    }
+    if (type === "rot") {
+      if (getBoardTiles().length === 0) {
+        setStatus("No placed tile on the board to rotate.");
+        return;
+      }
+      playSeSelect();
+      activeItem = "rot";
+      setStatus("Click any placed tile to rotate freely, then click CONFIRM.");
+      updateUI(); return;
+    }
+    if (type === "trap") {
+      var validTraps = getValidTrapCells();
+      if (validTraps.length === 0) {
+        setStatus("No valid empty cell for TRAP.");
+        return;
+      }
+    }
+    if (type === "bomb") {
+      if (getBoardTiles().length === 0) {
+        setStatus("No placed tile on the board to DESTROY.");
+        return;
+      }
+    }
+    playSeSelect();
+    activeItem = type;
+    setStatus(type === "trap" ? "Click any empty cell (including special cells) to set TRAP" : "Click a tile to DESTROY");
+    updateUI();
+  }
+
+  function onCellClick(r, c) {
+    if (!stageConfirmed || gameOver || turnPlayer !== 1) return;
+
+    if (rotDraft && !rotDraft.committed) {
+      if (rotDraft.r === r && rotDraft.c === c) {
+        stopCpuBackgroundPrecompute();
+        board[r][c].tile.legs = rotateLegsCW(board[r][c].tile.legs);
+        rotDraft.rotCount = (rotDraft.rotCount + 1) % 4;
+        playSeRotate();
+        var degNow = rotDraft.rotCount * 90;
+        setStatus(degNow === 0
+          ? "Back to 0°. Click tile to rotate, or select a hand tile & cell."
+          : ("Rotated " + degNow + "°. Click tile again, or select a hand tile & cell, then CONFIRM."));
+        updateUI();
+        return;
+      }
+    }
+
+    if (draftMove) {
+      if (draftMove.r === r && draftMove.c === c) {
+        draftMove.tile.legs = rotateLegsCW(draftMove.tile.legs);
+        playSeRotate();
+        setStatus("Click tile to rotate 90°, or click CONFIRM to finish turn.");
+        updateUI();
+      }
+      return;
+    }
+
+    if (activeItem === "rot") {
+      if (!itemUsed[1].rot && board[r][c] && board[r][c].tile) {
+        stopCpuBackgroundPrecompute();
+        var origLegs = board[r][c].tile.legs.slice();
+        board[r][c].tile.legs = rotateLegsCW(origLegs);
+        rotDraft = {
+          r: r,
+          c: c,
+          origLegs: origLegs,
+          rotCount: 1
+        };
+        playSeRotate();
+        setStatus("Rotated 90°. Click same tile to rotate further, or click CONFIRM / CANCEL.");
+        updateUI();
+      }
+      return;
+    }
+    if (activeItem === "trap") {
+      if (!itemUsed[1].trap && canSetTrapAt(r, c)) {
+        var costTrap = ITEM_COSTS.trap;
+        itemUsed[1].trap = true;
+        scores[1] -= costTrap; trapMap[r][c] = 1; activeItem = null;
+        cpuKnowsP1Trap = true;
+        playSeTrapArm();
+        addLog("P1: TRAP (-" + costTrap + " pt)", "#fbbf24");
+        setStatus("Select a tile, place it, click to rotate, then click CONFIRM.");
+        updateUI();
+        triggerCellClass(r, c, "fx-trap-lock", 520);
+      }
+      return;
+    }
+    if (activeItem === "bomb") {
+      if (!itemUsed[1].bomb && board[r][c] && board[r][c].tile) {
+        stopCpuBackgroundPrecompute();
+        var prevSigBomb = getBoardSignatureForCpu();
+        var prevDiffBomb = cpuDifficulty;
+        var prevTurn2Bomb = turnCount[2];
+        var costBomb = ITEM_COSTS.bomb;
+        itemUsed[1].bomb = true;
+        scores[1] -= costBomb; board[r][c] = null; activeItem = null;
+        var newSigBomb = getBoardSignatureForCpu();
+        carryOverUnaffectedCandidates(prevSigBomb, prevDiffBomb, prevTurn2Bomb, newSigBomb, [[r, c]]);
+        playSeDestroyBlast();
+        addLog("P1: DESTROY (-" + costBomb + " pt)", "#fbbf24");
+        setStatus("Select a tile, place it, click to rotate, then click CONFIRM.");
+        updateUI();
+        spawnDestroyBlast(r, c);
+        scheduleCpuBackgroundPrecompute();
+      }
+      return;
+    }
+
+    var handTile = hands[1][selectedHandIdx];
+    var moves = getValidMoves(handTile, 1);
+    for (var i = 0; i < moves.length; i++) {
+      if (moves[i].r === r && moves[i].c === c) {
+        stopCpuBackgroundPrecompute();
+        if (rotDraft) {
+          rotDraft.committed = true;
+          activeItem = null;
+        }
+        draftMove = {
+          r: r,
+          c: c,
+          handIdx: selectedHandIdx,
+          penalty: moves[i].penalty,
+          tile: {
+            num: handTile.num,
+            owner: handTile.owner,
+            wild: !!handTile.wild,
+            legs: handTile.legs.slice()
+          }
+        };
+        playSeSelect();
+        setStatus(rotDraft
+          ? "Click placed tile to rotate, or click CONFIRM to confirm both rotation & placement."
+          : "Click placed tile to rotate 90°, or click CONFIRM to end turn.");
+        updateUI();
+        break;
+      }
+    }
+  }
+
+  var origFinalizeMove = finalizeMove;
+  finalizeMove = function(r, c, handIdx, tile, player, isPenalty) {
+    var prevBoardSig = getBoardSignatureForCpu();
+    var prevDiff = cpuDifficulty;
+    var prevTurn2 = turnCount[2];
+    var changedCoords = [[r, c]];
+    if (turnRotatedPos && turnRotatedPos.coord && turnRotatedPos.coord.length === 2) {
+      changedCoords.push([turnRotatedPos.coord[0], turnRotatedPos.coord[1]]);
+    }
+
+    origFinalizeMove(r, c, handIdx, tile, player, isPenalty);
+
+    if (player === 1 && !gameOver && stageConfirmed) {
+      var newBoardSig = getBoardSignatureForCpu();
+      carryOverUnaffectedCandidates(prevBoardSig, prevDiff, prevTurn2, newBoardSig, changedCoords);
+    }
+  };
+
+  function createTileElement(tile) {
+    var el = document.createElement("div");
+    el.className = "tile owner-" + tile.owner + (tile.wild ? " wild-card" : "");
+    el.textContent = tile.wild ? "\u2600" : tile.num;
+    var legClasses = ["top", "right", "bottom", "left"];
+    for (var i = 0; i < 4; i++) {
+      if (tile.legs[i]) {
+        var leg = document.createElement("div");
+        leg.className = "leg " + legClasses[i];
+        el.appendChild(leg);
+      }
+    }
+    return el;
+  }
+
+  function updateUI() {
+    document.getElementById("score1").textContent = scores[1];
+    document.getElementById("score2").textContent = scores[2];
+
+    if (!stageConfirmed) {
+      document.getElementById("turnInfo").textContent = "Stage Ready";
+    } else {
+      document.getElementById("turnInfo").textContent = turnCount[1] === 0 ? "Turn 1 (Place Anywhere)" : "Turn " + (turnCount[1] + 1);
+    }
+
+    var hasDraft = (draftMove !== null || rotDraft !== null);
+    var canSelectHandOrCell = stageConfirmed && !gameOver && turnPlayer === 1 && (draftMove === null);
+    var canAct = stageConfirmed && !gameOver && turnPlayer === 1 && !hasDraft;
+    document.getElementById("btnConfirm").disabled = !((!stageConfirmed) || (!gameOver && turnPlayer === 1 && hasDraft));
+    document.getElementById("btnUndo").disabled = !(stageConfirmed && !gameOver && turnPlayer === 1 && hasDraft);
+
+    var keys = ["rot", "shf", "trap", "bomb"];
+    var validTrapList = canAct ? getValidTrapCells() : [];
+    var trapTargetSet = {};
+    for (var vt = 0; vt < validTrapList.length; vt++) {
+      trapTargetSet[validTrapList[vt][0] + "," + validTrapList[vt][1]] = true;
+    }
+    var boardTileCount = canAct ? getBoardTiles().length : 0;
+
+    for (var k = 0; k < keys.length; k++) {
+      var key = keys[k];
+      var btn = document.getElementById("item-" + key);
+      var costEl = document.getElementById("cost-" + key);
+      var costVal = ITEM_COSTS[key];
+      var used = itemUsed[1][key];
+      if (costEl) {
+        costEl.textContent = used ? "USED" : (costVal + " pt");
+      }
+      if (key === "trap") {
+        btn.disabled = !canAct || used || scores[1] < costVal || validTrapList.length === 0;
+      } else if (key === "rot" || key === "bomb") {
+        btn.disabled = !canAct || used || scores[1] < costVal || boardTileCount === 0;
+      } else {
+        btn.disabled = !canAct || used || scores[1] < costVal;
+      }
+      if (activeItem === key) btn.classList.add("active"); else btn.classList.remove("active");
+    }
+
+    var handList = document.getElementById("handList");
+    handList.innerHTML = "";
+    for (var idx = 0; idx < hands[1].length; idx++) {
+      (function(i) {
+        var slot = document.createElement("div");
+        slot.className = "hand-slot" + (i === selectedHandIdx ? " selected" : "");
+        slot.onclick = function() {
+          if (canSelectHandOrCell) {
+            selectedHandIdx = i; activeItem = null; playSeSelect(); updateUI();
+          }
+        };
+        slot.appendChild(createTileElement(hands[1][i]));
+        handList.appendChild(slot);
+      })(idx);
+    }
+
+    var validMap = {};
+    if (canSelectHandOrCell && (!activeItem || activeItem === "rot")) {
+      var moves = getValidMoves(hands[1][selectedHandIdx], 1);
+      for (var m = 0; m < moves.length; m++) {
+        validMap[moves[m].r + "," + moves[m].c] = moves[m].penalty;
+      }
+    }
+
+    var glowSet = {};
+    for (var g = 0; g < glowCells.length; g++) {
+      glowSet[glowCells[g][0] + "," + glowCells[g][1]] = true;
+    }
+
+    var boardEl = document.getElementById("board");
+    boardEl.style.gridTemplateColumns = "repeat(" + COLS + ", var(--cell-size))";
+    boardEl.innerHTML = "";
+    syncBoardPersistentState();
+
+    for (var r = 0; r < ROWS; r++) {
+      for (var c = 0; c < COLS; c++) {
+        (function(rr, cc) {
+          var cell = document.createElement("div");
+          cell.className = "cell";
+          var data = board[rr][cc];
+          var isDraftHere = draftMove && draftMove.r === rr && draftMove.c === cc;
+          var posKey = rr + "," + cc;
+
+          if (data && data.wall) {
+            cell.classList.add("wall");
+          } else {
+            if (minusMap[rr][cc]) {
+              cell.classList.add("minus-cell");
+              var disk = document.createElement("span"); disk.className = "bh-disk";
+              var core = document.createElement("span"); core.className = "bh-core";
+              cell.appendChild(disk); cell.appendChild(core);
+            }
+            if (luckyMap[rr][cc]) cell.classList.add("lucky");
+            if (rouletteMap[rr][cc]) cell.classList.add("roulette-cell");
+            if (trapMap[rr][cc] === 1 && (!data || !data.tile) && !isDraftHere) {
+              cell.classList.add("trap-p1");
+              var badge = document.createElement("span");
+              badge.className = "trap-badge";
+              cell.appendChild(badge);
+            }
+            if (posKey in glowSet) cell.classList.add("score-glow");
+
+            var isRotDraftHere = rotDraft && rotDraft.r === rr && rotDraft.c === cc;
+            if (isDraftHere) {
+              cell.classList.add("draft-cell");
+              cell.appendChild(createTileElement(draftMove.tile));
+            } else if (data && data.tile) {
+              if (isRotDraftHere) cell.classList.add("draft-cell");
+              cell.appendChild(createTileElement(data.tile));
+              if (lastPlacedPos && lastPlacedPos[0] === rr && lastPlacedPos[1] === cc) cell.classList.add("last-placed");
+              if (canAct && (activeItem === "bomb" || activeItem === "rot")) cell.classList.add("targetable");
+            } else {
+              if (canAct && activeItem === "trap" && (posKey in trapTargetSet)) {
+                cell.classList.add("targetable");
+              } else if (posKey in validMap) {
+                cell.classList.add(validMap[posKey] ? "penalty-drop" : "valid-drop");
+              }
+            }
+            cell.onclick = function() { onCellClick(rr, cc); };
+          }
+          boardEl.appendChild(cell);
+        })(r, c);
+      }
+    }
+  }
+
+  function prepareStageSelection() {
+    try {
+      stopCpuBackgroundPrecompute();
+      resetAllCpuCaches();
+      hideGameOverOverlay();
+      var newBtnInit = document.getElementById("btnNew");
+      if (newBtnInit) newBtnInit.classList.remove("rematch-pulse");
+      applyCpuDifficultyClass();
+      applyViewModeClass();
+      applyMoonOptionClass();
+      scores = { 1: 0, 2: 0 };
+      turnCount = { 1: 0, 2: 0 };
+      turnPlayer = 1;
+      stageConfirmed = false;
+      matchStartEffectPlayed = false;
+      selectedHandIdx = 0;
+      activeItem = null;
+      draftMove = null;
+      rotDraft = null;
+      turnRotatedPos = null;
+      glowCells = [];
+      gameOver = false;
+      lastPlacedPos = null;
+      itemUsed = {
+        1: { rot: false, shf: false, trap: false, bomb: false },
+        2: { rot: false, shf: false, trap: false, bomb: false }
+      };
+      cpuKnowsP1Trap = false;
+      document.getElementById("logBox").innerHTML = "";
+      generateStage();
+      hands[1] = [createRandomTile(1), createRandomTile(1), createRandomTile(1), createRandomTile(1)];
+      hands[2] = [createRandomTile(2), createRandomTile(2), createRandomTile(2), createRandomTile(2)];
+      addLog("STAGE READY (" + COLS + "x" + ROWS + ")" + (moonRouletteAll ? " [MOON ALL]" : "") + " - CONFIRM", "#38bdf8");
+      setStatus("Check or re-pick stage, then press CONFIRM to draw First/Second (50/50).");
+      updateUI();
+    } catch (e) {
+      showError(e.message);
+    }
+  }
+
+  document.getElementById("btnCpuDiff").onclick = cycleCpuDifficulty;
+  document.getElementById("btnMoonAll").onclick = toggleMoonRouletteAll;
+  document.getElementById("btnViewMode").onclick = toggleViewMode;
+  document.getElementById("btnBgm").onclick = toggleBgm;
+  document.getElementById("btnNew").onclick = function() {
+    playSeSelect();
+    prepareStageSelection();
+  };
+  document.getElementById("goalSelect").onchange = function() {
+    playSeSelect();
+  };
+  document.getElementById("btnConfirm").onclick = confirmDraftMove;
+  document.getElementById("btnUndo").onclick = cancelDraftMove;
+  document.getElementById("item-rot").onclick = function() { selectItem("rot"); };
+  document.getElementById("item-shf").onclick = function() { selectItem("shf"); };
+  document.getElementById("item-trap").onclick = function() { selectItem("trap"); };
+  document.getElementById("item-bomb").onclick = function() { selectItem("bomb"); };
+  document.getElementById("goPlayAgainBtn").onclick = function() {
+    playSeSelect();
+    prepareStageSelection();
+  };
+  document.getElementById("goCloseBtn").onclick = function() {
+    playSeSelect();
+    hideGameOverOverlay();
+  };
+
+  prepareStageSelection();
+})();
+</script>
+</body>
+</html>
