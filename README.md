@@ -6,7 +6,7 @@
 
 _**一度は最後まで読んでね。**_
 
-[▶ ゲームをプレイ](https://gggames-works.github.io/SURETSU-WARS/suretsu_wars_v1.3.6.html)
+[▶ ゲームをプレイ](https://gggames-works.github.io/SURETSU-WARS/suretsu_wars_v1.3.7.html)
 
 ## 1. ゲーム概要・勝利条件
 
