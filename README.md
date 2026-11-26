@@ -1,4 +1,4 @@
-# 数烈大戦 / SURETSU WARS (v1.3.7)
+# 数烈大戦 / SURETSU WARS (v1.3.8)
 
 数字と「脚（コネクタ）」を持つタイルを盤面につなげて役を作り、目標スコア（Goal）の到達を競う対戦型パズル・ボードゲームです。
 
@@ -6,7 +6,7 @@
 
 _**一度は最後まで読んでね。**_
 
-[▶ ゲームをプレイ](https://gggames-works.github.io/SURETSU-WARS/suretsu_wars_v1.3.7.html)
+[▶ ゲームをプレイ](https://gggames-works.github.io/SURETSU-WARS/suretsu_wars_v1.3.8.html)
 
 ## 1. ゲーム概要・勝利条件
 
@@ -27,6 +27,7 @@ _**一度は最後まで読んでね。**_
    * 画面上部のボタンでオプションを設定できます。
 
      * **CPUレベル**: `EASY` / `NORMAL` / `HARD` の切り替え
+       (EASYがアイテムを使用しないのは、仕様です)
 
      * **Full Moon**: `OFF`（通常） / `ON`（盤面の特殊マスがすべてムーンマスになる特殊ルール）
 
@@ -138,6 +139,8 @@ HTML / CSS / JavaScript のみで構成されており、モダンブラウザ�
 * **Windows**: Firefox,Vivaldi
 
 * **Android**: Google Chrome,Fennec(Firefox派生)
+
+* **iOS**    : Safari 
 
 ※ iOS（Safari / Chrome）、Mac、Linux およびその他のブラウザでも閲覧・プレイ可能ですが、端末の画面サイズやブラウザの仕様によりレイアウトや音声再生の挙動が一部異なる場合があります。
 
